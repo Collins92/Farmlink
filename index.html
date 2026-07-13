@@ -7,83 +7,18 @@
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
   body { background: #f5f5f5; }
-  
-  .header {
-    background: #22c55e;
-    color: white;
-    text-align: center;
-    padding: 25px 15px;
-  }
+  .header { background: #22c55e; color: white; text-align: center; padding: 25px 15px; }
   .header h1 { font-size: 28px; margin-bottom: 8px; }
-  .header p { font-size: 15px; opacity: 0.9; }
-
   .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
-  .card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  .card h2 { margin-bottom: 15px; color: #333; }
-
-  input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-  }
-  .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-  button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: #22c55e;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  button:hover { background: #16a34a; }
-  .btn-logout { background: #ef4444; }
-  .btn-logout:hover { background: #dc2626; }
-
-  .chat-box {
-    height: 250px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
-    overflow-y: auto;
-    background: #fafafa;
-    margin-bottom: 10px;
-  }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+  .btn-group { display: flex; gap: 10px; }
+  button { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+  .chat-box { height: 250px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; overflow-y: auto; background: #fafafa; margin-bottom: 10px; }
   .message { padding: 8px 12px; border-radius: 15px; margin: 5px 0; max-width: 75%; }
-  .buyer { background: #dcfce7; margin-left: auto; text-align: right; }
-  .farmer { background: #e5e7eb; margin-right: auto; text-align: left; }
-  .chat-input { display: flex; gap: 8px; }
-  .chat-input input { flex: 1; }
-  .chat-input button { flex: 0 0 80px; }
-
-  .produce-item {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 10px 0;
-  }
+  .buyer { background: #dcfce7; margin-left: auto; }
+  .farmer { background: #e5e7eb; margin-right: auto; }
   .hidden { display: none; }
-
-  .popup {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
-  }
-  .popup-content {
-    background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px;
-    text-align: center;
-  }
-  .popup-content h3 { color: #22c55e; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -94,152 +29,86 @@
 </div>
 
 <div class="container">
-
   <div class="card">
     <h2>Login / Sign Up</h2>
-    <input type="email" id="email" placeholder="Enter Email">
+    <input type="email" id="email" placeholder="Enter Email" value="emporerotieno369@gmail.com">
     <input type="password" id="password" placeholder="Enter Password">
     <div class="btn-group">
       <button onclick="signUp()">Sign Up</button>
       <button onclick="login()">Login</button>
-      <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
     <p id="auth-status" style="margin-top:10px; color:#16a34a;"></p>
   </div>
 
   <div class="card" id="produce-section">
     <h2>Available Produce</h2>
-    <div id="produce-list">
-      <p>Please login to view produce</p>
-    </div>
+    <div id="produce-list"><p>Please login to view produce</p></div>
   </div>
 
   <div class="card hidden" id="chat-section">
-    <h2>💬 Chat with Farmer</h2>
-    <div class="chat-box" id="chatBox">
-      <div class="message farmer">Farmer: Hello! I have fresh maize and beans available.</div>
-      <div class="message buyer">Buyer: Hi, what's the price per 90kg bag?</div>
-    </div>
-    <div class="chat-input">
-      <input type="text" id="chatInput" placeholder="Type your message...">
+    <h2>💬 Chat</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="chatInput" placeholder="Type message...">
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
-
 </div>
 
-<!-- M-PESA POPUP -->
-<div class="popup" id="mpesaPopup">
-  <div class="popup-content">
-    <h3>💰 M-PESA PAYMENT</h3>
-    <p>Enter your M-PESA number to pay</p>
-    <input type="tel" id="mpesaPhone" placeholder="e.g 0712345678" value="0141146754">
-    <input type="number" id="mpesaAmount" placeholder="Amount KSh" readonly>
-    <div class="btn-group">
-      <button onclick="sendStkPush()">Pay Now</button>
-      <button style="background:#999" onclick="closePopup()">Cancel</button>
-    </div>
-    <p id="mpesaStatus" style="margin-top:10px; font-size:13px;"></p>
-  </div>
-</div>
-
-<!-- FIREBASE MODULAR SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-  // YOUR FIREBASE CONFIG
+  // YOUR REAL FIREBASE CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
     authDomain: "farm-link-global.firebaseapp.com",
-    databaseURL: "https://farm-link-global-default-rtdb.firebaseio.com",
     projectId: "farm-link-global",
     storageBucket: "farm-link-global.firebasestorage.app",
     messagingSenderId: "178314019522",
-    appId: "1:178314019522:web:d06e3b70d575725f70315b",
-    measurementId: "G-H8H6PYJGYN"
+    appId: "1:178314019522:web:d06e3b70d575725f70315b"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  window.signUp = function() {
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('password').value;
-    createUserWithEmailAndPassword(auth, email, pass)
-      .then(() => showLoggedIn())
-      .catch(e => alert(e.message));
+  window.signUp = () => {
+    createUserWithEmailAndPassword(auth, email.value, password.value)
+    .then(() => { authStatus.innerText="Signed up!"; showLoggedIn(); })
+    .catch(e => alert(e.message));
+  }
+  window.login = () => {
+    signInWithEmailAndPassword(auth, email.value, password.value)
+    .then(() => { authStatus.innerText="Logged in!"; showLoggedIn(); })
+    .catch(e => alert(e.message));
   }
   
-  window.login = function() {
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('password').value;
-    signInWithEmailAndPassword(auth, email, pass)
-      .then(() => showLoggedIn())
-      .catch(e => alert(e.message));
-  }
-  
-  window.logout = function() {
-    signOut(auth).then(() => {
-      document.getElementById('auth-status').innerText = "Logged out";
-      document.getElementById('produce-list').innerHTML = "<p>Please login to view produce</p>";
-      document.getElementById('chat-section').classList.add('hidden');
+  function showLoggedIn(){
+    produceList.innerHTML = `<div style="border:1px solid #ddd; padding:12px; border-radius:8px;"><h3>Maize - KSh 4500</h3><p>Farmer: John from Eldoret</p></div>`;
+    chatSection.classList.remove('hidden');
+    
+    const q = query(collection(db, "chats"), orderBy("createdAt"));
+    onSnapshot(q, (snapshot) => {
+      chatBox.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const className = data.from === auth.currentUser.uid ? "buyer" : "farmer";
+        chatBox.innerHTML += `<div class="message ${className}">${data.text}</div>`;
+      });
     });
   }
-  
-  function showLoggedIn() {
-    document.getElementById('auth-status').innerText = "Logged in successfully!";
-    loadProduce();
-    document.getElementById('chat-section').classList.remove('hidden');
-  }
 
-  function loadProduce() {
-    document.getElementById('produce-list').innerHTML = `
-      <div class="produce-item">
-        <h3>Maize - 90kg Bag</h3>
-        <p>Price: KSh 4,500</p>
-        <p>Farmer: John from Eldoret</p>
-        <button onclick="openMpesa(4500)">Pay with M-Pesa</button>
-      </div>
-      <div class="produce-item">
-        <h3>Beans - 90kg Bag</h3>
-        <p>Price: KSh 12,000</p>
-        <p>Farmer: Mary from Kitale</p>
-        <button onclick="openMpesa(12000)">Pay with M-Pesa</button>
-      </div>
-    `;
-  }
-
-  window.openMpesa = function(amount) {
-    document.getElementById('mpesaAmount').value = amount;
-    document.getElementById('mpesaPopup').style.display = 'flex';
-  }
-  window.closePopup = function() {
-    document.getElementById('mpesaPopup').style.display = 'none';
-  }
-  window.sendStkPush = function() {
-    const phone = document.getElementById('mpesaPhone').value;
-    const amount = document.getElementById('mpesaAmount').value;
-    document.getElementById('mpesaStatus').innerText = `Sending STK Push to ${phone}... Enter M-PESA PIN`;
-    setTimeout(() => {
-      alert(`STK Push sent to ${phone} for KSh ${amount}\nCheck your phone`);
-      closePopup();
-    }, 1500);
-  }
-
-  window.sendMessage = function() {
-    const input = document.getElementById('chatInput');
-    const msg = input.value.trim();
-    if(msg === "") return;
-    const chatBox = document.getElementById('chatBox');
-    chatBox.innerHTML += `<div class="message buyer">Buyer: ${msg}</div>`;
-    input.value = "";
-    chatBox.scrollTop = chatBox.scrollHeight;
-    setTimeout(() => {
-      chatBox.innerHTML += `<div class="message farmer">Farmer: Got it! I can deliver tomorrow.</div>`;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }, 1000);
+  window.sendMessage = async () => {
+    if(chatInput.value.trim() === "") return;
+    await addDoc(collection(db, "chats"), {
+      text: chatInput.value,
+      from: auth.currentUser.uid,
+      createdAt: new Date()
+    });
+    chatInput.value = "";
   }
 </script>
 </body>
-</html>
+   </html>
