@@ -1,169 +1,247 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>FarmLink Global</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmLink - Connecting Farmers Directly to Buyers</title>
 <style>
-  body { font-family: Arial; background: #f0f9f0; margin: 0; padding: 0; }
- .page { display: none; padding: 20px; min-height: 100vh; }
- .active { display: block; }
- .box { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 20px auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  h1,h2 { color: #0b7a2f; text-align: center; }
-  input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-  button { width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
- .main-btn { background: #0b7a2f; color: white; }
- .role-btn { background: #e8f5e9; color: #0b7a2f; }
- .logout { background: red; color: white; }
- .chat-box { border:1px solid #ccc; height:300px; overflow-y:scroll; padding:10px; border-radius:8px; margin-bottom:10px; background:#fafafa }
- .msg-me { background:#0b7a2f; color:white; padding:8px; border-radius:10px; margin:5px 0; text-align:right }
- .msg-them { background:#e0e0e0; padding:8px; border-radius:10px; margin:5px 0; text-align:left }
- .crop-card { border:1px solid #ddd; padding:10px; border-radius:8px; margin:10px 0 }
-  #msg, #loginMsg, #payMsg, #cropMsg, #chatMsg { text-align: center; margin-top: 10px; font-weight: bold; }
- .link a { color: #0b7a2f; cursor: pointer; text-decoration: underline; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+  body { background: #f5f5f5; }
+  
+  .header {
+    background: #22c55e;
+    color: white;
+    text-align: center;
+    padding: 25px 15px;
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 15px; opacity: 0.9; }
+
+  .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .card h2 { margin-bottom: 15px; color: #333; }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+  button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #22c55e;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { background: #16a34a; }
+  .btn-logout { background: #ef4444; }
+  .btn-logout:hover { background: #dc2626; }
+
+  .chat-box {
+    height: 250px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    overflow-y: auto;
+    background: #fafafa;
+    margin-bottom: 10px;
+  }
+  .message { padding: 8px 12px; border-radius: 15px; margin: 5px 0; max-width: 75%; }
+  .buyer { background: #dcfce7; margin-left: auto; text-align: right; }
+  .farmer { background: #e5e7eb; margin-right: auto; text-align: left; }
+  .chat-input { display: flex; gap: 8px; }
+  .chat-input input { flex: 1; }
+  .chat-input button { flex: 0 0 80px; }
+
+  .produce-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
+  }
+  .hidden { display: none; }
+
+  /* M-PESA POPUP */
+  .popup {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+  }
+  .popup-content {
+    background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px;
+    text-align: center;
+  }
+  .popup-content h3 { color: #22c55e; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 
-<!-- PAGE 1: SIGNUP -->
-<div id="signupPage" class="page active"><div class="box"><h1>FarmLink Global</h1><p>$2/month</p>
-<div id="roleStep"><button class="role-btn" onclick="selectRole('farmer')">I'm a Farmer</button><button class="role-btn" onclick="selectRole('buyer')">I'm a Buyer</button></div>
-<div id="signupStep" style="display:none"><h3 id="formTitle">Signup</h3>
-<input id="name" placeholder="Full Name"><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Password">
-<input id="phone" placeholder="Phone"><select id="country"><option>Kenya</option><option>Uganda</option></select>
-<button class="main-btn" onclick="createAccount()">Create Account</button><p id="msg"></p>
-<div class="link"><a onclick="showPage('loginPage')">Already have account? Login</a></div></div></div></div>
+<div class="header">
+  <h1>🌾 FarmLink</h1>
+  <p>Connecting Farmers Directly to Buyers</p>
+</div>
 
-<!-- PAGE 2: LOGIN -->
-<div id="loginPage" class="page"><div class="box"><h2>Login</h2>
-<input id="loginEmail" placeholder="Email"><input id="loginPassword" type="password" placeholder="Password">
-<button class="main-btn" onclick="loginUser()">Login</button><p id="loginMsg"></p></div></div>
+<div class="container">
 
-<!-- PAGE 3: PAYMENT -->
-<div id="paymentPage" class="page"><div class="box"><h2>Unlock FarmLink</h2><p>$2 / month = Ksh 260</p>
-<div style="background:#fff3cd;padding:15px;border-radius:8px"><h3>Pay to M-Pesa:</h3><h1 style="color:#0b7a2f">0141 146 754</h1><p>Account Name: Collins Otieno</p></div>
-<p>1. Go to M-Pesa > Send Money<br>2. Enter: 0141 146 754<br>3. Amount: 260<br>4. Click below</p>
-<button class="main-btn" onclick="confirmPayment()">I Have Paid Ksh 260</button><p id="payMsg"></p><button class="logout" onclick="logout()">Logout</button></div></div>
+  <!-- LOGIN / SIGNUP -->
+  <div class="card">
+    <h2>Login / Sign Up</h2>
+    <input type="email" id="email" placeholder="Enter Email">
+    <input type="password" id="password" placeholder="Enter Password">
+    <div class="btn-group">
+      <button onclick="signUp()">Sign Up</button>
+      <button onclick="login()">Login</button>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+    <p id="auth-status" style="margin-top:10px; color:#16a34a;"></p>
+  </div>
 
-<!-- PAGE 4: FARMER DASHBOARD -->
-<div id="farmerPage" class="page"><div class="box"><h2>Farmer Dashboard</h2><p id="welcomeFarmer"></p>
-<h3>Post Crop/Animal</h3><input id="cropName" placeholder="Item name e.g Maize"><input id="cropQty" placeholder="Quantity & Price e.g 50kg @ 4000">
-<button class="main-btn" onclick="postCrop()">Post</button><p id="cropMsg"></p>
-<button class="main-btn" onclick="showPage('chatPage');loadChats()">Messages</button><button class="logout" onclick="logout()">Logout</button></div></div>
+  <!-- AVAILABLE PRODUCE + M-PESA -->
+  <div class="card" id="produce-section">
+    <h2>Available Produce</h2>
+    <div id="produce-list">
+      <p>Please login to view produce</p>
+    </div>
+  </div>
 
-<!-- PAGE 5: BUYER DASHBOARD -->
-<div id="buyerPage" class="page"><div class="box"><h2>Buyer Dashboard</h2><p id="welcomeBuyer"></p><h3>Available Crops</h3>
-<div id="cropsList">Loading...</div><button class="main-btn" onclick="showPage('chatPage');loadChats()">Messages</button><button class="logout" onclick="logout()">Logout</button></div></div>
+  <!-- CHAT SECTION -->
+  <div class="card hidden" id="chat-section">
+    <h2>💬 Chat with Farmer</h2>
+    <div class="chat-box" id="chatBox">
+      <div class="message farmer">Farmer: Hello! I have fresh maize and beans available.</div>
+      <div class="message buyer">Buyer: Hi, what's the price per 90kg bag?</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Type your message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
 
-<!-- PAGE 6: CHAT -->
-<div id="chatPage" class="page"><div class="box"><h2>Chat</h2>
-<select id="chatWith" onchange="loadMessages()"><option>Select User</option></select>
-<div class="chat-box" id="chatBox"></div>
-<input id="chatInput" placeholder="Type message..."><button class="main-btn" onclick="sendMessage()">Send</button>
-<button onclick="showPage(currentUserData.role+'Page')">Back</button></div></div>
+</div>
 
-<!-- PAGE 7: ADMIN PANEL -->
-<div id="adminPage" class="page"><div class="box"><h2>Admin Panel</h2><p>Payments & Users</p>
-<div id="adminUsers">Loading users...</div><button class="logout" onclick="logout()">Logout</button></div></div>
+<!-- M-PESA POPUP PROMPT -->
+<div class="popup" id="mpesaPopup">
+  <div class="popup-content">
+    <h3>💰 M-PESA PAYMENT</h3>
+    <p>Enter your M-PESA number to pay</p>
+    <input type="tel" id="mpesaPhone" placeholder="e.g 0712345678" value="0141146754">
+    <input type="number" id="mpesaAmount" placeholder="Amount KSh" readonly>
+    <div class="btn-group">
+      <button onclick="sendStkPush()">Pay Now</button>
+      <button style="background:#999" onclick="closePopup()">Cancel</button>
+    </div>
+    <p id="mpesaStatus" style="margin-top:10px; font-size:13px;"></p>
+  </div>
+</div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, addDoc, getDocs, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script>
+  // REPLACE WITH YOUR FIREBASE CONFIG
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
 
-  const firebaseConfig = {apiKey:"AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",authDomain:"farm-link-global.firebaseapp.com",projectId:"farm-link-global",storageBucket:"farm-link-global.firebasestorage.app",messagingSenderId:"178314019522",appId:"1:178314019522:web:d06e3b70d575725f70315b"};
-  const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
-  let selectedRole = "farmer"; let currentUserData = null;
-
-  window.showPage = function(pageId){ document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); }
-  window.selectRole = function(role) { selectedRole = role; document.getElementById('roleStep').style.display = 'none'; document.getElementById('signupStep').style.display = 'block'; }
-
-  window.createAccount = async function() {
-    const userCred = await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      name: document.getElementById('name').value, email: document.getElementById('email').value, phone: document.getElementById('phone').value,
-      role: selectedRole, paid: false, createdAt: new Date()
-    });
-    showPage('loginPage');
+  // AUTH FUNCTIONS
+  function signUp() {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
+    auth.createUserWithEmailAndPassword(email, pass)
+      .then(() => showLoggedIn())
+      .catch(e => alert(e.message));
   }
-
-  window.loginUser = async function() {
-    const userCred = await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
-    const userDoc = await getDoc(doc(db, "users", userCred.user.uid));
-    currentUserData = userDoc.data();
-
-    if(currentUserData.email === "emporerotieno369@gmail.com"){ showPage('adminPage'); loadAdmin(); return; }
-    if(currentUserData.paid === false){ showPage('paymentPage'); return; }
-
-    document.getElementById('welcomeFarmer').innerText = "Welcome " + currentUserData.name;
-    document.getElementById('welcomeBuyer').innerText = "Welcome " + currentUserData.name;
-    if(currentUserData.role === "farmer"){ showPage('farmerPage'); loadCrops(); } else { showPage('buyerPage'); loadCrops(); }
+  function login() {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
+    auth.signInWithEmailAndPassword(email, pass)
+      .then(() => showLoggedIn())
+      .catch(e => alert(e.message));
   }
-
-  window.confirmPayment = async function(){
-    await updateDoc(doc(db, "users", auth.currentUser.uid), { paid: true, paidAt: new Date(), paidAmount: 260 });
-    if(currentUserData.role === "farmer") showPage('farmerPage'); else showPage('buyerPage');
-  }
-
-  // POST CROP - NO IMAGE
-  window.postCrop = async function(){
-    await addDoc(collection(db, "crops"), {
-      farmerId: auth.currentUser.uid, farmerName: currentUserData.name,
-      crop: document.getElementById('cropName').value, qty: document.getElementById('cropQty').value,
-      createdAt: new Date()
-    });
-    document.getElementById('cropMsg').innerText="Posted!";
-    document.getElementById('cropName').value=""; document.getElementById('cropQty').value="";
-  }
-
-  async function loadCrops(){
-    const cropsList = document.getElementById('cropsList'); cropsList.innerHTML = "";
-    const snap = await getDocs(collection(db, "crops"));
-    snap.forEach((doc) => {
-      const data = doc.data();
-      cropsList.innerHTML += `<div class="crop-card"><b>${data.crop}</b> - ${data.qty}<br>By: ${data.farmerName}
-      <button onclick="startChat('${data.farmerId}','${data.farmerName}')">Chat Farmer</button></div>`;
+  function logout() {
+    auth.signOut().then(() => {
+      document.getElementById('auth-status').innerText = "Logged out";
+      document.getElementById('produce-list').innerHTML = "<p>Please login to view produce</p>";
+      document.getElementById('chat-section').classList.add('hidden');
     });
   }
-
-  // CHAT SYSTEM
-  window.startChat = function(userId, name){
-    showPage('chatPage');
-    document.getElementById('chatWith').innerHTML = `<option value="${userId}">${name}</option>`;
-    loadMessages();
-  }
-  async function loadChats(){
-    const snap = await getDocs(collection(db, "users"));
-    let options = "<option>Select User</option>";
-    snap.forEach(d=>{ if(d.id!== auth.currentUser.uid) options += `<option value="${d.id}">${d.data().name}</option>` });
-    document.getElementById('chatWith').innerHTML = options;
-  }
-  window.sendMessage = async function(){
-    const to = document.getElementById('chatWith').value; const text = document.getElementById('chatInput').value;
-    await addDoc(collection(db, "chats"), { from: auth.currentUser.uid, to: to, text: text, createdAt: new Date() });
-    document.getElementById('chatInput').value = ""; 
-  }
-  async function loadMessages(){
-    const to = document.getElementById('chatWith').value; const chatBox = document.getElementById('chatBox'); chatBox.innerHTML="";
-    const q = query(collection(db, "chats"), orderBy("createdAt"));
-    onSnapshot(q, (snap)=>{ chatBox.innerHTML=""; snap.forEach(d=>{ const m=d.data();
-      if((m.from===auth.currentUser.uid && m.to===to) || (m.to===auth.currentUser.uid && m.from===to)){
-        chatBox.innerHTML += `<div class="${m.from===auth.currentUser.uid?'msg-me':'msg-them'}">${m.text}</div>`
-      }
-    })});
+  function showLoggedIn() {
+    document.getElementById('auth-status').innerText = "Logged in successfully!";
+    loadProduce();
+    document.getElementById('chat-section').classList.remove('hidden');
   }
 
-  // ADMIN PANEL
-  async function loadAdmin(){
-    const adminDiv = document.getElementById('adminUsers'); adminDiv.innerHTML="";
-    const snap = await getDocs(collection(db, "users"));
-    snap.forEach(d=>{ const u=d.data();
-      adminDiv.innerHTML += `<div style="border:1px solid #ccc;padding:10px;margin:5px">
-      <b>${u.name}</b> - ${u.role}<br>Email: ${u.email}<br>Paid: ${u.paid?'YES ✅':'NO ❌'} ${u.paidAmount?'Ksh '+u.paidAmount:''}
-      </div>`
-    });
+  // LOAD PRODUCE
+  function loadProduce() {
+    document.getElementById('produce-list').innerHTML = `
+      <div class="produce-item">
+        <h3>Maize - 90kg Bag</h3>
+        <p>Price: KSh 4,500</p>
+        <p>Farmer: John from Eldoret</p>
+        <button onclick="openMpesa(4500)">Pay with M-Pesa</button>
+      </div>
+      <div class="produce-item">
+        <h3>Beans - 90kg Bag</h3>
+        <p>Price: KSh 12,000</p>
+        <p>Farmer: Mary from Kitale</p>
+        <button onclick="openMpesa(12000)">Pay with M-Pesa</button>
+      </div>
+    `;
   }
 
-  window.logout = async function(){ await signOut(auth); showPage('loginPage'); }
+  // M-PESA POPUP FUNCTIONS
+  function openMpesa(amount) {
+    document.getElementById('mpesaAmount').value = amount;
+    document.getElementById('mpesaPopup').style.display = 'flex';
+    document.getElementById('mpesaStatus').innerText = "";
+  }
+  function closePopup() {
+    document.getElementById('mpesaPopup').style.display = 'none';
+  }
+  function sendStkPush() {
+    const phone = document.getElementById('mpesaPhone').value;
+    const amount = document.getElementById('mpesaAmount').value;
+    document.getElementById('mpesaStatus').innerText = `Sending STK Push to ${phone}... Enter M-PESA PIN`;
+    
+    // SIMULATION - Replace with Safaricom Daraja API backend for real payments
+    setTimeout(() => {
+      alert(`STK Push sent to ${phone} for KSh ${amount}\nCheck your phone to enter M-PESA PIN`);
+      closePopup();
+    }, 1500);
+  }
+
+  // CHAT FUNCTION
+  function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if(msg === "") return;
+    const chatBox = document.getElementById('chatBox');
+    chatBox.innerHTML += `<div class="message buyer">Buyer: ${msg}</div>`;
+    input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    setTimeout(() => {
+      chatBox.innerHTML += `<div class="message farmer">Farmer: Got it! I can deliver tomorrow.</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }, 1000);
+  }
 </script>
 </body>
-</html>
+                            </html>
