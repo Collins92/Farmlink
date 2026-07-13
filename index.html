@@ -16,8 +16,8 @@
   button { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
   .chat-box { height: 250px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; overflow-y: auto; background: #fafafa; margin-bottom: 10px; }
   .message { padding: 8px 12px; border-radius: 15px; margin: 5px 0; max-width: 75%; }
-  .buyer { background: #dcfce7; margin-left: auto; }
-  .farmer { background: #e5e7eb; margin-right: auto; }
+  .buyer { background: #dcfce7; margin-left: auto; text-align:right; }
+  .farmer { background: #e5e7eb; margin-right: auto; text-align:left; }
   .hidden { display: none; }
 </style>
 </head>
@@ -57,7 +57,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
   // YOUR REAL FIREBASE CONFIG
@@ -74,19 +74,29 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  // GET ELEMENTS PROPERLY
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const authStatus = document.getElementById('auth-status');
+  const produceList = document.getElementById('produce-list');
+  const chatSection = document.getElementById('chat-section');
+  const chatBox = document.getElementById('chatBox');
+  const chatInput = document.getElementById('chatInput');
+
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Signed up!"; showLoggedIn(); })
+    .then(() => { authStatus.innerText="Signed up successfully!"; showLoggedIn(); })
     .catch(e => alert(e.message));
   }
+  
   window.login = () => {
     signInWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Logged in!"; showLoggedIn(); })
+    .then(() => { authStatus.innerText="Logged in successfully!"; showLoggedIn(); })
     .catch(e => alert(e.message));
   }
   
   function showLoggedIn(){
-    produceList.innerHTML = `<div style="border:1px solid #ddd; padding:12px; border-radius:8px;"><h3>Maize - KSh 4500</h3><p>Farmer: John from Eldoret</p></div>`;
+    produceList.innerHTML = `<div style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px;"><h3>Maize - KSh 4500</h3><p>Farmer: John from Eldoret</p></div>`;
     chatSection.classList.remove('hidden');
     
     const q = query(collection(db, "chats"), orderBy("createdAt"));
@@ -97,11 +107,12 @@
         const className = data.from === auth.currentUser.uid ? "buyer" : "farmer";
         chatBox.innerHTML += `<div class="message ${className}">${data.text}</div>`;
       });
+      chatBox.scrollTop = chatBox.scrollHeight;
     });
   }
 
   window.sendMessage = async () => {
-    if(chatInput.value.trim() === "") return;
+    if(chatInput.value.trim() === "" || !auth.currentUser) return;
     await addDoc(collection(db, "chats"), {
       text: chatInput.value,
       from: auth.currentUser.uid,
@@ -111,4 +122,4 @@
   }
 </script>
 </body>
-   </html>
+     </html>
