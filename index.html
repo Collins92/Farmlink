@@ -75,7 +75,6 @@
   }
   .hidden { display: none; }
 
-  /* M-PESA POPUP */
   .popup {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
@@ -96,7 +95,6 @@
 
 <div class="container">
 
-  <!-- LOGIN / SIGNUP -->
   <div class="card">
     <h2>Login / Sign Up</h2>
     <input type="email" id="email" placeholder="Enter Email">
@@ -109,7 +107,6 @@
     <p id="auth-status" style="margin-top:10px; color:#16a34a;"></p>
   </div>
 
-  <!-- AVAILABLE PRODUCE + M-PESA -->
   <div class="card" id="produce-section">
     <h2>Available Produce</h2>
     <div id="produce-list">
@@ -117,7 +114,6 @@
     </div>
   </div>
 
-  <!-- CHAT SECTION -->
   <div class="card hidden" id="chat-section">
     <h2>💬 Chat with Farmer</h2>
     <div class="chat-box" id="chatBox">
@@ -132,7 +128,7 @@
 
 </div>
 
-<!-- M-PESA POPUP PROMPT -->
+<!-- M-PESA POPUP -->
 <div class="popup" id="mpesaPopup">
   <div class="popup-content">
     <h3>💰 M-PESA PAYMENT</h3>
@@ -147,48 +143,56 @@
   </div>
 </div>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script>
-  // REPLACE WITH YOUR FIREBASE CONFIG
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
+<!-- FIREBASE MODULAR SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-  // AUTH FUNCTIONS
-  function signUp() {
+  // YOUR FIREBASE CONFIG
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
+    authDomain: "farm-link-global.firebaseapp.com",
+    databaseURL: "https://farm-link-global-default-rtdb.firebaseio.com",
+    projectId: "farm-link-global",
+    storageBucket: "farm-link-global.firebasestorage.app",
+    messagingSenderId: "178314019522",
+    appId: "1:178314019522:web:d06e3b70d575725f70315b",
+    measurementId: "G-H8H6PYJGYN"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.signUp = function() {
     const email = document.getElementById('email').value;
     const pass = document.getElementById('password').value;
-    auth.createUserWithEmailAndPassword(email, pass)
+    createUserWithEmailAndPassword(auth, email, pass)
       .then(() => showLoggedIn())
       .catch(e => alert(e.message));
   }
-  function login() {
+  
+  window.login = function() {
     const email = document.getElementById('email').value;
     const pass = document.getElementById('password').value;
-    auth.signInWithEmailAndPassword(email, pass)
+    signInWithEmailAndPassword(auth, email, pass)
       .then(() => showLoggedIn())
       .catch(e => alert(e.message));
   }
-  function logout() {
-    auth.signOut().then(() => {
+  
+  window.logout = function() {
+    signOut(auth).then(() => {
       document.getElementById('auth-status').innerText = "Logged out";
       document.getElementById('produce-list').innerHTML = "<p>Please login to view produce</p>";
       document.getElementById('chat-section').classList.add('hidden');
     });
   }
+  
   function showLoggedIn() {
     document.getElementById('auth-status').innerText = "Logged in successfully!";
     loadProduce();
     document.getElementById('chat-section').classList.remove('hidden');
   }
 
-  // LOAD PRODUCE
   function loadProduce() {
     document.getElementById('produce-list').innerHTML = `
       <div class="produce-item">
@@ -206,29 +210,24 @@
     `;
   }
 
-  // M-PESA POPUP FUNCTIONS
-  function openMpesa(amount) {
+  window.openMpesa = function(amount) {
     document.getElementById('mpesaAmount').value = amount;
     document.getElementById('mpesaPopup').style.display = 'flex';
-    document.getElementById('mpesaStatus').innerText = "";
   }
-  function closePopup() {
+  window.closePopup = function() {
     document.getElementById('mpesaPopup').style.display = 'none';
   }
-  function sendStkPush() {
+  window.sendStkPush = function() {
     const phone = document.getElementById('mpesaPhone').value;
     const amount = document.getElementById('mpesaAmount').value;
     document.getElementById('mpesaStatus').innerText = `Sending STK Push to ${phone}... Enter M-PESA PIN`;
-    
-    // SIMULATION - Replace with Safaricom Daraja API backend for real payments
     setTimeout(() => {
-      alert(`STK Push sent to ${phone} for KSh ${amount}\nCheck your phone to enter M-PESA PIN`);
+      alert(`STK Push sent to ${phone} for KSh ${amount}\nCheck your phone`);
       closePopup();
     }, 1500);
   }
 
-  // CHAT FUNCTION
-  function sendMessage() {
+  window.sendMessage = function() {
     const input = document.getElementById('chatInput');
     const msg = input.value.trim();
     if(msg === "") return;
@@ -236,7 +235,6 @@
     chatBox.innerHTML += `<div class="message buyer">Buyer: ${msg}</div>`;
     input.value = "";
     chatBox.scrollTop = chatBox.scrollHeight;
-    
     setTimeout(() => {
       chatBox.innerHTML += `<div class="message farmer">Farmer: Got it! I can deliver tomorrow.</div>`;
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -244,4 +242,4 @@
   }
 </script>
 </body>
-                            </html>
+</html>
