@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FarmLink - Subscription</title>
+<title>FarmLink - Subscription v3</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
   body { background: #f5f5f5; }
   .header { background: #22c55e; color: white; text-align: center; padding: 25px 15px; }
-  .header h1 { font-size: 28px; margin-bottom: 8px; }
   .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
   .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
@@ -16,12 +15,8 @@
   button { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
   .btn-mpesa { background: #00a651; margin-top: 10px; }
   .btn-sub { background: #f59e0b; margin-top: 10px; width: 100%; }
-  .chat-box { height: 250px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; overflow-y: auto; background: #fafafa; margin-bottom: 10px; }
-  .message { padding: 8px 12px; border-radius: 15px; margin: 5px 0; max-width: 75%; }
-  .buyer { background: #dcfce7; margin-left: auto; text-align:right; }
-  .farmer { background: #e5e7eb; margin-right: auto; text-align:left; }
   .hidden { display: none; }
-  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
   .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
   .badge { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
 </style>
@@ -29,12 +24,12 @@
 <body>
 
 <div class="header">
-  <h1>🌾 FarmLink</h1>
+  <h1>🌾 FarmLink v3</h1>
   <p>Connecting Farmers Directly to Buyers</p>
 </div>
 
 <div class="container">
-  <div class="card">
+  <div class="card" id="login-card">
     <h2>Login / Sign Up</h2>
     <input type="email" id="email" placeholder="Enter Email" value="emporerotieno369@gmail.com">
     <input type="password" id="password" placeholder="Enter Password">
@@ -55,48 +50,25 @@
       <h3>Available Produce</h3>
       <div id="produce-list"></div>
     </div>
-
-    <div class="card">
-      <h3>💬 Chat</h3>
-      <div class="chat-box" id="chatBox"></div>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="chatInput" placeholder="Type message...">
-        <button onclick="sendMessage()">Send</button>
-      </div>
-    </div>
   </div>
 </div>
 
-<!-- SUBSCRIPTION POPUP -->
+<!-- SUBSCRIPTION POPUP - THIS IS THE IMPORTANT ONE -->
 <div id="subModal" class="modal hidden">
   <div class="modal-content">
-    <h3>🔒 Subscription Required</h3>
-    <p>You've used your 3 free trials.</p>
-    <p>Pay <b>KSh 150</b> for 30 days access</p>
-    <p style="font-size:14px; color:#666;">Pay to: <b>0141146754</b></p>
+    <h2>🔒 Subscription Required</h2>
+    <p style="margin:15px 0;">You've used your 3 free trials.</p>
+    <h3 style="color:#f59e0b;">Pay KSh 150 for 30 Days</h3>
+    <p style="font-size:14px; color:#666; margin:10px 0;">Send to M-Pesa: <b>0141146754</b></p>
     <input type="text" id="subMpesaNumber" placeholder="Enter your M-Pesa 07XXXXXXXX">
-    <button class="btn-sub" onclick="paySubscription()">Pay KSh 150 via M-Pesa</button>
+    <button class="btn-sub" onclick="paySubscription()">Pay KSh 150 Now</button>
     <p id="sub-status" style="margin-top:10px; color:#16a34a;"></p>
   </div>
 </div>
 
-<!-- M-PESA POPUP FOR PRODUCE -->
-<div id="mpesaModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>💰 Pay with M-Pesa</h3>
-    <p>Enter your M-Pesa number to pay <b>KSh 4500</b></p>
-    <input type="text" id="mpesaNumber" placeholder="07XXXXXXXX">
-    <button class="btn-mpesa" onclick="payWithMpesa()">Send Payment Request</button>
-    <button style="background:#ef4444; margin-top:8px;" onclick="closeMpesa()">Cancel</button>
-    <p id="mpesa-status" style="margin-top:10px; color:#16a34a;"></p>
-  </div>
-</div>
-
 <script type="module">
-   console.log("FarmLink v2.1 Subscription");
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
@@ -109,25 +81,14 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getFirestore(app);
 
-  const email = document.getElementById('email');
-  const password = document.getElementById('password');
-  const authStatus = document.getElementById('auth-status');
-  const appSection = document.getElementById('app-section');
-  const produceList = document.getElementById('produce-list');
-  const chatBox = document.getElementById('chatBox');
-  const chatInput = document.getElementById('chatInput');
-  const subBadge = document.getElementById('sub-badge');
-
-  const OWNER_MPESA = "0141146754"; // YOUR NUMBER
+  const OWNER_MPESA = "0141146754";
   const SUB_PRICE = 150;
   const SUB_DAYS = 30;
 
-  // SUBSCRIPTION LOGIC
   function getSubscription() {
-    const data = JSON.parse(localStorage.getItem('farmlink_sub') || '{}');
-    return data;
+    try { return JSON.parse(localStorage.getItem('farmlink_sub') || '{}'); } 
+    catch(e) { return {}; }
   }
   function setSubscription(expiry) {
     localStorage.setItem('farmlink_sub', JSON.stringify({ expiry: expiry }));
@@ -148,13 +109,13 @@
 
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Signed up successfully!"; handleLogin(); })
+    .then(() => { authStatus.innerText="Signed up!"; handleLogin(); })
     .catch(e => alert(e.message));
   }
   
   window.login = () => {
     signInWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Logged in successfully!"; handleLogin(); })
+    .then(() => { authStatus.innerText="Logged in!"; handleLogin(); })
     .catch(e => alert(e.message));
   }
 
@@ -162,86 +123,41 @@
     const loginCount = addLogin();
     const subscribed = isSubscribed();
 
+    console.log("Login:", loginCount, "Subscribed:", subscribed);
+
     if(subscribed) {
-      subBadge.innerText = "Premium";
-      subBadge.style.background = "#22c55e";
+      document.getElementById('sub-badge').innerText = "Premium";
+      document.getElementById('sub-badge').style.background = "#22c55e";
       showApp();
     } else if(loginCount <= 3) {
-      subBadge.innerText = `Trial ${loginCount}/3`;
+      document.getElementById('sub-badge').innerText = `Trial ${loginCount}/3`;
       showApp();
     } else {
+      // FORCE SUBSCRIPTION POPUP
+      document.getElementById('login-card').classList.add('hidden');
       document.getElementById('subModal').classList.remove('hidden');
     }
   }
 
   function showApp() {
-    appSection.classList.remove('hidden');
-    loadProduce();
-    loadChat();
+    document.getElementById('login-card').classList.add('hidden');
+    document.getElementById('app-section').classList.remove('hidden');
+    produceList.innerHTML = `<div style="border:1px solid #ddd; padding:15px; border-radius:8px;"><h4>Maize - KSh 4500</h4><button class="btn-mpesa">Pay with M-Pesa</button></div>`;
   }
 
-  function loadProduce() {
-    produceList.innerHTML = `
-      <div style="border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:10px;">
-        <h4>Maize - KSh 4500</h4>
-        <p>Farmer: John from Eldoret</p>
-        <button class="btn-mpesa" onclick="openMpesa()">Pay with M-Pesa</button>
-      </div>
-    `;
-  }
-
-  function loadChat() {
-    const q = query(collection(db, "chats"), orderBy("createdAt"));
-    onSnapshot(q, (snapshot) => {
-      chatBox.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const className = data.from === auth.currentUser.uid ? "buyer" : "farmer";
-        chatBox.innerHTML += `<div class="message ${className}">${data.text}</div>`;
-      });
-      chatBox.scrollTop = chatBox.scrollHeight;
-    });
-  }
-
-  window.sendMessage = async () => {
-    if(chatInput.value.trim() === "" || !auth.currentUser) return;
-    await addDoc(collection(db, "chats"), {
-      text: chatInput.value,
-      from: auth.currentUser.uid,
-      createdAt: new Date()
-    });
-    chatInput.value = "";
-  }
-
-  // SUBSCRIPTION PAYMENT
   window.paySubscription = () => {
     const num = document.getElementById('subMpesaNumber').value;
     if(num.length < 10) return alert("Enter valid M-Pesa number");
     
-    // SIMULATION: In real app this calls Safaricom Daraja API
-    document.getElementById('sub-status').innerText = `STK Push sent to ${num} for KSh ${SUB_PRICE}. Pay to ${OWNER_MPESA}`;
+    document.getElementById('sub-status').innerText = `STK Push sent to ${num}. Pay KSh ${SUB_PRICE} to ${OWNER_MPESA}`;
     
-    // Activate 30 day subscription
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + SUB_DAYS);
     setSubscription(expiry);
-    localStorage.setItem('farmlink_logins', '0'); // reset trial
+    localStorage.setItem('farmlink_logins', '0'); // reset trials
 
-    setTimeout(() => {
-      document.getElementById('subModal').classList.add('hidden');
-      handleLogin(); // reload app
-    }, 2000);
-  }
-
-  // PRODUCE M-PESA
-  window.openMpesa = () => { document.getElementById('mpesaModal').classList.remove('hidden'); }
-  window.closeMpesa = () => { document.getElementById('mpesaModal').classList.add('hidden'); }
-  window.payWithMpesa = () => {
-    const num = document.getElementById('mpesaNumber').value;
-    if(num.length < 10) return alert("Enter valid M-Pesa number");
-    document.getElementById('mpesa-status').innerText = `Payment request sent to ${num}. Check your phone.`;
-    setTimeout(closeMpesa, 2000);
+    setTimeout(() => { location.reload(); }, 2500);
   }
 </script>
 </body>
-</html>
+   </html>
