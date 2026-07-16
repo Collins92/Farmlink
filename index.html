@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FarmLink - Subscription</title>
+<title>FarmLink - Support Farmers</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
   body { background: #f5f5f5; }
@@ -13,13 +13,9 @@
   input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
   .btn-group { display: flex; gap: 10px; }
   button { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
-  .btn-mpesa { background: #00a651; margin-top: 10px; }
-  .btn-sub { background: #f59e0b; margin-top: 10px; width: 100%; font-size: 16px; }
+  .btn-mpesa { background: #00a651; margin-top: 10px; width: 100%; }
+  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; }
   .hidden { display: none; }
-  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-  .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
-  .badge { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
-  .mpesa-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 15px; border-radius: 10px; margin: 15px 0; }
 </style>
 </head>
 <body>
@@ -30,6 +26,15 @@
 </div>
 
 <div class="container">
+
+  <!-- SUPPORT BOX -->
+  <div class="card support-box">
+    <h3>❤️ Support FarmLink</h3>
+    <p>Help us keep this platform free for farmers</p>
+    <h2 style="color:#00a651; margin:10px 0;">Pochi La Biashara: 0141146754</h2>
+    <p>Send any amount to support</p>
+  </div>
+
   <div class="card" id="login-card">
     <h2>Login / Sign Up</h2>
     <input type="email" id="email" placeholder="Enter Email" value="emporerotieno369@gmail.com">
@@ -42,35 +47,18 @@
   </div>
 
   <div class="card hidden" id="app-section">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h2>Dashboard</h2>
-      <span id="sub-badge" class="badge">Trial</span>
-    </div>
+    <h2>Dashboard</h2>
     
     <div class="card">
       <h3>Available Produce</h3>
       <div id="produce-list"></div>
     </div>
-  </div>
-</div>
 
-<!-- SUBSCRIPTION POPUP -->
-<div id="subModal" class="modal hidden">
-  <div class="modal-content">
-    <h2>🔒 Subscription Required</h2>
-    <p style="margin:15px 0;">You've used your 3 free trials.</p>
-    
-    <div class="mpesa-box">
-      <h3 style="color:#00a651;">Pay KSh 150 for 30 Days</h3>
-      <p style="margin:10px 0;">1. Go to M-Pesa</p>
-      <p><b>Lipa na M-Pesa > Send Money</b></p>
-      <p>To: <b style="font-size:18px; color:#00a651;">0141146754</b></p>
-      <p>Amount: <b>KSh 150</b></p>
+    <div class="card support-box">
+      <h3>💚 Love this platform?</h3>
+      <p>Support us via Pochi La Biashara</p>
+      <h2 style="color:#00a651;">0141146754</h2>
     </div>
-
-    <input type="text" id="subMpesaNumber" placeholder="Enter your M-Pesa 07XXXXXXXX">
-    <button class="btn-sub" onclick="paySubscription()">I Have Paid - Activate Now</button>
-    <p id="sub-status" style="margin-top:10px; color:#16a34a; font-weight:bold;"></p>
   </div>
 </div>
 
@@ -90,79 +78,33 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  const OWNER_MPESA = "0141146754";
-  const SUB_PRICE = 150;
-  const SUB_DAYS = 30;
-
-  function getSubscription() {
-    try { return JSON.parse(localStorage.getItem('farmlink_sub') || '{}'); } 
-    catch(e) { return {}; }
-  }
-  function setSubscription(expiry) {
-    localStorage.setItem('farmlink_sub', JSON.stringify({ expiry: expiry }));
-  }
-  function getLoginCount() {
-    return parseInt(localStorage.getItem('farmlink_logins') || '0');
-  }
-  function addLogin() {
-    let count = getLoginCount() + 1;
-    localStorage.setItem('farmlink_logins', count);
-    return count;
-  }
-  function isSubscribed() {
-    const sub = getSubscription();
-    if(!sub.expiry) return false;
-    return new Date() < new Date(sub.expiry);
-  }
-
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Account created!"; handleLogin(); })
+    .then(() => { authStatus.innerText="Account created!"; showApp(); })
     .catch(e => alert(e.message));
   }
   
   window.login = () => {
     signInWithEmailAndPassword(auth, email.value, password.value)
-    .then(() => { authStatus.innerText="Logged in!"; handleLogin(); })
+    .then(() => { authStatus.innerText="Logged in!"; showApp(); })
     .catch(e => alert(e.message));
-  }
-
-  function handleLogin() {
-    const loginCount = addLogin();
-    const subscribed = isSubscribed();
-
-    if(subscribed) {
-      document.getElementById('sub-badge').innerText = "Premium";
-      document.getElementById('sub-badge').style.background = "#22c55e";
-      showApp();
-    } else if(loginCount <= 3) {
-      document.getElementById('sub-badge').innerText = `Trial ${loginCount}/3`;
-      showApp();
-    } else {
-      document.getElementById('login-card').classList.add('hidden');
-      document.getElementById('subModal').classList.remove('hidden');
-    }
   }
 
   function showApp() {
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('app-section').classList.remove('hidden');
-    produceList.innerHTML = `<div style="border:1px solid #ddd; padding:15px; border-radius:8px;"><h4>Maize - KSh 4500</h4><button class="btn-mpesa">Pay with M-Pesa</button></div>`;
-  }
-
-  window.paySubscription = () => {
-    const num = document.getElementById('subMpesaNumber').value;
-    if(num.length < 10) return alert("Enter valid M-Pesa number");
-    
-    // OPTION 1: MANUAL
-    document.getElementById('sub-status').innerText = `✅ Activated! Check your M-Pesa. Pay KSh ${SUB_PRICE} to ${OWNER_MPESA}`;
-    
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + SUB_DAYS);
-    setSubscription(expiry);
-    localStorage.setItem('farmlink_logins', '0');
-
-    setTimeout(() => { location.reload(); }, 2000);
+    produceList.innerHTML = `
+      <div style="border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:10px;">
+        <h4>Maize - KSh 4500/bag</h4>
+        <p>Eldoret</p>
+        <button class="btn-mpesa" onclick="alert('Pay directly to farmer or Pochi 0141146754')">Pay with M-Pesa</button>
+      </div>
+      <div style="border:1px solid #ddd; padding:15px; border-radius:8px;">
+        <h4>Beans - KSh 12000/bag</h4>
+        <p>Nakuru</p>
+        <button class="btn-mpesa" onclick="alert('Pay directly to farmer or Pochi 0141146754')">Pay with M-Pesa</button>
+      </div>
+    `;
   }
 </script>
 </body>
