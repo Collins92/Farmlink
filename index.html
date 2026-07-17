@@ -206,14 +206,17 @@
       };
       if(!updates.name || !updates.location) return alert("Fill all fields");
     }
-    update(ref(db, 'users/' + currentUser.uid), updates);
-    currentUser = {...currentUser, ...updates};
-    document.getElementById('user-name').innerText = currentUser.name;
-    document.getElementById('profile-form').classList.add('hidden');
-    document.getElementById('complete-profile-alert').classList.add('hidden');
-    alert("Profile Saved!");
-    loadUsers(); loadBuyers();
+    
+    update(ref(db, 'users/' + currentUser.uid), updates).then(() => {
+      currentUser = {...currentUser, ...updates};
+      document.getElementById('user-name').innerText = currentUser.name;
+      document.getElementById('profile-form').classList.add('hidden');
+      document.getElementById('complete-profile-alert').classList.add('hidden');
+      alert("✅ Profile Saved Successfully!");
+      loadUsers(); loadBuyers(); // refresh the lists
+    }).catch(e => alert("Error: " + e.message));
   }
+    
 
   window.showAddForm = () => document.getElementById('add-form').classList.remove('hidden');
   window.hideAddForm = () => document.getElementById('add-form').classList.add('hidden');
