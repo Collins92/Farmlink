@@ -10,7 +10,7 @@
  .header { background: #166534; color: white; text-align: center; padding: 25px 15px; }
  .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-  input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
   button { padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
  .btn-secondary { background: #2563eb; }
  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
@@ -19,10 +19,12 @@
  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
 
   /* CHAT STYLES */
- .chat-box { border: 1px solid #ddd; height: 300px; overflow-y: scroll; padding: 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 10px; }
- .msg { padding: 8px 12px; margin: 5px 0; border-radius: 10px; max-width: 80%; }
- .msg-me { background: #22c55e; color: white; margin-left: auto; text-align: right; }
- .msg-them { background: #e5e7eb; }
+ .chat-box { border: 1px solid #ddd; height: 350px; overflow-y: scroll; padding: 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 10px; }
+ .msg { padding: 8px 12px; margin: 5px 0; border-radius: 10px; max-width: 80%; clear: both; }
+ .msg-me { background: #22c55e; color: white; float: right; }
+ .msg-them { background: #e5e7eb; float: left; }
+ .chat-input-group { display: flex; gap: 8px; }
+ .chat-input-group input { flex: 1; }
 </style>
 </head>
 <body>
@@ -88,9 +90,11 @@
     <div class="card hidden" id="chat-window">
       <h3>Chat with <span id="chat-with"></span></h3>
       <div class="chat-box" id="chat-box"></div>
-      <input type="text" id="chat-input" placeholder="Type message...">
-      <button onclick="sendMessage()">Send</button>
-      <button onclick="closeChat()" style="background:red;">Close</button>
+      <div class="chat-input-group">
+        <input type="text" id="chat-input" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+      <button onclick="closeChat()" style="background:red; width:100%; margin-top:8px;">Close</button>
     </div>
 
     <!-- LISTINGS -->
@@ -105,10 +109,18 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-  const firebaseConfig = { apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08", authDomain: "farm-link-global.firebaseapp.com", projectId: "farm-link-global" };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
+    authDomain: "farm-link-global.firebaseapp.com",
+    databaseURL: "https://farm-link-global-default-rtdb.firebaseio.com", // ADD THIS
+    projectId: "farm-link-global"
+  };
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getDatabase(app);
 
   const nameEl = document.getElementById('name');
   const roleEl = document.getElementById('role');
@@ -119,18 +131,18 @@
 
   let currentUser = null;
   let activeChat = null;
-  let chats = JSON.parse(localStorage.getItem('farmlink_chats')) || {};
 
   let items = [
-    {name:"Maize 90kg", price:"KSh 4500", location:"Eldoret", category:"Crops", seller:"John Farmer"},
-    {name:"DAP Fertilizer", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Ltd"},
-    {name:"Jembe", price:"KSh 800", location:"Kitale", category:"Farm Tools", seller:"Mary Seller"}
+    {id:1, name:"Maize 90kg", price:"KSh 4500", location:"Eldoret", category:"Crops", seller:"John Farmer", sellerEmail:"john@test.com"},
+    {id:2, name:"DAP Fertilizer", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Ltd", sellerEmail:"agro@test.com"},
+    {id:3, name:"Jembe", price:"KSh 800", location:"Kitale", category:"Farm Tools", seller:"Mary Seller", sellerEmail:"mary@test.com"}
   ];
 
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
-   .then(() => {
-      currentUser = {name: nameEl.value, role: roleEl.value, email: emailEl.value};
+   .then((userCredential) => {
+      currentUser = {name: nameEl.value, role: roleEl.value, email: emailEl.value, uid: userCredential.user.uid};
+      set(ref(db, 'users/' + userCredential.user.uid), currentUser);
       authStatusEl.innerText = "Account created!";
       showApp();
     })
@@ -139,8 +151,8 @@
 
   window.login = () => {
     signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
-   .then(() => {
-      currentUser = {name: "User", role: "buyer", email: emailEl.value};
+   .then((userCredential) => {
+      currentUser = {name: "User", role: "buyer", email: emailEl.value, uid: userCredential.user.uid};
       showApp();
     })
    .catch(e => alert(e.message));
@@ -159,7 +171,7 @@
   window.hideAddForm = () => document.getElementById('add-form').classList.add('hidden');
 
   window.addItem = () => {
-    items.unshift({name:document.getElementById('item-name').value, price:document.getElementById('item-price').value, location:document.getElementById('item-location').value, category:document.getElementById('category').value, seller:currentUser.name});
+    items.unshift({name:document.getElementById('item-name').value, price:document.getElementById('item-price').value, location:document.getElementById('item-location').value, category:document.getElementById('category').value, seller:currentUser.name, sellerEmail:currentUser.email});
     hideAddForm(); loadItems();
   }
 
@@ -169,15 +181,16 @@
         <span class="badge">${item.category}</span>
         <h4>${item.name} - ${item.price}</h4>
         <p>📍 ${item.location} | 👤 ${item.seller}</p>
-        <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${item.seller}')">💬 Contact Seller</button>
+        <!-- REMOVED ALERT. NOW OPENS CHAT -->
+        <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${item.sellerEmail}', '${item.seller}')">💬 Chat Seller</button>
       </div>
     `).join('');
   }
 
-  // CHAT FUNCTIONS
-  window.openChat = (seller) => {
-    activeChat = seller;
-    document.getElementById('chat-with').innerText = seller;
+  // REAL CHAT FUNCTIONS WITH FIREBASE
+  window.openChat = (sellerEmail, sellerName) => {
+    activeChat = sellerEmail.replace('.', ','); // Firebase can't use .
+    document.getElementById('chat-with').innerText = sellerName;
     document.getElementById('chat-window').classList.remove('hidden');
     loadChat();
   }
@@ -186,34 +199,49 @@
 
   window.showChatList = () => {
     document.getElementById('chat-list').classList.remove('hidden');
-    const contacts = Object.keys(chats);
-    document.getElementById('chat-contacts').innerHTML = contacts.length?
-      contacts.map(c => `<button onclick="openChat('${c}')" style="width:100%; margin:5px 0;">${c}</button>`).join('')
-      : "<p>No messages yet</p>";
+    // Load chat contacts from Firebase
+    onValue(ref(db, 'chats'), (snapshot) => {
+      const data = snapshot.val() || {};
+      let contacts = new Set();
+      Object.keys(data).forEach(key => {
+        if(key.includes(currentUser.email.replace('.', ','))) {
+          contacts.add(key.replace(currentUser.email.replace('.', ','), '').replace('-', ''));
+        }
+      });
+      document.getElementById('chat-contacts').innerHTML = contacts.size?
+        [...contacts].map(c => `<button onclick="openChat('${c}', '${c}')" style="width:100%; margin:5px 0;">${c}</button>`).join('')
+        : "<p>No messages yet</p>";
+    });
   }
 
   window.hideChatList = () => document.getElementById('chat-list').classList.add('hidden');
 
   window.sendMessage = () => {
     const msg = document.getElementById('chat-input').value;
-    if(!msg) return;
-    if(!chats[activeChat]) chats[activeChat] = [];
-    chats[activeChat].push({from: currentUser.name, text: msg, time: new Date().toLocaleTimeString()});
-    localStorage.setItem('farmlink_chats', JSON.stringify(chats));
+    if(!msg || !activeChat) return;
+    const chatId = [currentUser.email.replace('.', ','), activeChat].sort().join('-');
+    push(ref(db, 'chats/' + chatId), {
+      from: currentUser.name,
+      fromEmail: currentUser.email,
+      text: msg,
+      time: Date.now()
+    });
     document.getElementById('chat-input').value = '';
-    loadChat();
   }
 
   function loadChat() {
-    const chatBox = document.getElementById('chat-box');
-    const msgs = chats[activeChat] || [];
-    chatBox.innerHTML = msgs.map(m => `
-      <div class="msg ${m.from === currentUser.name? 'msg-me' : 'msg-them'}">
-        <b>${m.from}:</b> ${m.text}
-      </div>
-    `).join('');
-    chatBox.scrollTop = chatBox.scrollHeight;
+    const chatId = [currentUser.email.replace('.', ','), activeChat].sort().join('-');
+    onValue(ref(db, 'chats/' + chatId), (snapshot) => {
+      const data = snapshot.val() || {};
+      const msgs = Object.values(data);
+      document.getElementById('chat-box').innerHTML = msgs.map(m => `
+        <div class="msg ${m.fromEmail === currentUser.email? 'msg-me' : 'msg-them'}">
+          <b>${m.from}:</b> ${m.text}
+        </div>
+      `).join('');
+      document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+    });
   }
 </script>
 </body>
-       </html>
+   </html>
