@@ -15,10 +15,8 @@
  .btn-secondary { background: #2563eb; }
  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
  .hidden { display: none; }
- .item { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
+ .item, .user { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
-
-  /* CHAT STYLES */
  .chat-box { border: 1px solid #ddd; height: 350px; overflow-y: scroll; padding: 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 10px; }
  .msg { padding: 8px 12px; margin: 5px 0; border-radius: 10px; max-width: 80%; clear: both; }
  .msg-me { background: #22c55e; color: white; float: right; }
@@ -63,6 +61,12 @@
       <button onclick="showChatList()" class="btn-secondary">💬 Messages</button>
     </div>
 
+    <!-- FARMERS LIST -->
+    <div class="card">
+      <h3>👨‍🌾 Available Farmers</h3>
+      <div id="users-list"></div>
+    </div>
+
     <!-- ADD ITEM FORM -->
     <div class="card hidden" id="add-form">
       <h3>Post New Item</h3>
@@ -99,7 +103,7 @@
 
     <!-- LISTINGS -->
     <div class="card">
-      <h3>Available Produce & Farm Inputs</h3>
+      <h3>🛒 Available Produce & Farm Inputs</h3>
       <div id="items-list"></div>
     </div>
   </div>
@@ -114,7 +118,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
     authDomain: "farm-link-global.firebaseapp.com",
-    databaseURL: "https://farm-link-global-default-rtdb.firebaseio.com", // ADD THIS
+    databaseURL: "https://farm-link-global-default-rtdb.firebaseio.com",
     projectId: "farm-link-global"
   };
 
@@ -128,21 +132,16 @@
   const passwordEl = document.getElementById('password');
   const authStatusEl = document.getElementById('auth-status');
   const itemsListEl = document.getElementById('items-list');
+  const usersListEl = document.getElementById('users-list');
 
   let currentUser = null;
   let activeChat = null;
-
-  let items = [
-    {id:1, name:"Maize 90kg", price:"KSh 4500", location:"Eldoret", category:"Crops", seller:"John Farmer", sellerEmail:"john@test.com"},
-    {id:2, name:"DAP Fertilizer", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Ltd", sellerEmail:"agro@test.com"},
-    {id:3, name:"Jembe", price:"KSh 800", location:"Kitale", category:"Farm Tools", seller:"Mary Seller", sellerEmail:"mary@test.com"}
-  ];
 
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
    .then((userCredential) => {
       currentUser = {name: nameEl.value, role: roleEl.value, email: emailEl.value, uid: userCredential.user.uid};
-      set(ref(db, 'users/' + userCredential.user.uid), currentUser);
+      set(ref(db, 'users/' + userCredential.user.uid), currentUser); // SAVE USER
       authStatusEl.innerText = "Account created!";
       showApp();
     })
@@ -152,8 +151,11 @@
   window.login = () => {
     signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
    .then((userCredential) => {
-      currentUser = {name: "User", role: "buyer", email: emailEl.value, uid: userCredential.user.uid};
-      showApp();
+      currentUser = {uid: userCredential.user.uid};
+      onValue(ref(db, 'users/' + userCredential.user.uid), (snap) => {
+        currentUser = snap.val();
+        showApp();
+      });
     })
    .catch(e => alert(e.message));
   }
@@ -164,6 +166,7 @@
     document.getElementById('user-name').innerText = currentUser.name;
     document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
     if(currentUser.role === 'farmer') document.getElementById('add-btn').classList.remove('hidden');
+    loadUsers();
     loadItems();
   }
 
@@ -171,26 +174,44 @@
   window.hideAddForm = () => document.getElementById('add-form').classList.add('hidden');
 
   window.addItem = () => {
-    items.unshift({name:document.getElementById('item-name').value, price:document.getElementById('item-price').value, location:document.getElementById('item-location').value, category:document.getElementById('category').value, seller:currentUser.name, sellerEmail:currentUser.email});
-    hideAddForm(); loadItems();
+    const newItem = {name:document.getElementById('item-name').value, price:document.getElementById('item-price').value, location:document.getElementById('item-location').value, category:document.getElementById('category').value, seller:currentUser.name, sellerEmail:currentUser.email, sellerUid: currentUser.uid};
+    push(ref(db, 'items'), newItem); // SAVE ITEM
+    hideAddForm();
   }
 
   function loadItems() {
-    itemsListEl.innerHTML = items.map(item => `
-      <div class="item">
-        <span class="badge">${item.category}</span>
-        <h4>${item.name} - ${item.price}</h4>
-        <p>📍 ${item.location} | 👤 ${item.seller}</p>
-        <!-- REMOVED ALERT. NOW OPENS CHAT -->
-        <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${item.sellerEmail}', '${item.seller}')">💬 Chat Seller</button>
-      </div>
-    `).join('');
+    onValue(ref(db, 'items'), (snapshot) => {
+      const data = snapshot.val() || {};
+      const items = Object.values(data);
+      itemsListEl.innerHTML = items.map(item => `
+        <div class="item">
+          <span class="badge">${item.category}</span>
+          <h4>${item.name} - ${item.price}</h4>
+          <p>📍 ${item.location} | 👤 ${item.seller}</p>
+          <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${item.sellerEmail}', '${item.seller}')">💬 Chat Seller</button>
+        </div>
+      `).join('');
+    });
   }
 
-  // REAL CHAT FUNCTIONS WITH FIREBASE
-  window.openChat = (sellerEmail, sellerName) => {
-    activeChat = sellerEmail.replace('.', ','); // Firebase can't use .
-    document.getElementById('chat-with').innerText = sellerName;
+  function loadUsers() {
+    onValue(ref(db, 'users'), (snapshot) => {
+      const data = snapshot.val() || {};
+      const users = Object.values(data).filter(u => u.uid !== currentUser.uid && u.role === 'farmer');
+      usersListEl.innerHTML = users.map(u => `
+        <div class="user">
+          <h4>👨‍🌾 ${u.name}</h4>
+          <p>${u.email}</p>
+          <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${u.email}', '${u.name}')">💬 Chat ${u.name}</button>
+        </div>
+      `).join('');
+    });
+  }
+
+  // CHAT FUNCTIONS
+  window.openChat = (email, name) => {
+    activeChat = email.replace('.', ',');
+    document.getElementById('chat-with').innerText = name;
     document.getElementById('chat-window').classList.remove('hidden');
     loadChat();
   }
@@ -199,17 +220,16 @@
 
   window.showChatList = () => {
     document.getElementById('chat-list').classList.remove('hidden');
-    // Load chat contacts from Firebase
     onValue(ref(db, 'chats'), (snapshot) => {
       const data = snapshot.val() || {};
       let contacts = new Set();
       Object.keys(data).forEach(key => {
         if(key.includes(currentUser.email.replace('.', ','))) {
-          contacts.add(key.replace(currentUser.email.replace('.', ','), '').replace('-', ''));
+          contacts.add(key.split('-').find(e => e !== currentUser.email.replace('.', ',')));
         }
       });
       document.getElementById('chat-contacts').innerHTML = contacts.size?
-        [...contacts].map(c => `<button onclick="openChat('${c}', '${c}')" style="width:100%; margin:5px 0;">${c}</button>`).join('')
+        [...contacts].map(c => `<button onclick="openChat('${c.replace(',', '.')}', '${c}')" style="width:100%; margin:5px 0;">${c.replace(',', '.')}</button>`).join('')
         : "<p>No messages yet</p>";
     });
   }
@@ -244,4 +264,4 @@
   }
 </script>
 </body>
-   </html>
+                     </html>
