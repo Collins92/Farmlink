@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FarmLink</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+  body { background: #f5f5f5; }
+  .header { background: #166534; color: white; text-align: center; padding: 25px 15px; }
+  .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+  button { width: 48%; padding: 14px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+  .btn-secondary { background: #2563eb; float: right; }
+  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
+  .hidden { display: none; }
+  .item { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
+  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌾 FarmLink</h1>
+  <p>Connecting Farmers Directly to Buyers</p>
+</div>
+
+<div class="container">
+
+  <div class="support-box">
+    <h3>❤️ Support FarmLink</h3>
+    <p>Help us keep this platform free for farmers</p>
+    <h2 style="color:#00a651;">Pochi La Biashara: 0141146754</h2>
+  </div>
+
+  <div class="card" id="login-card">
+    <h2>Login / Sign Up</h2>
+    <input type="text" id="name" placeholder="Your Name">
+    <select id="role">
+      <option value="">Select Role</option>
+      <option value="farmer">Farmer / Seller</option>
+      <option value="buyer">Buyer</option>
+    </select>
+    <input type="email" id="email" placeholder="Enter Email">
+    <input type="password" id="password" placeholder="Enter Password">
+    <button onclick="signUp()">Sign Up</button>
+    <button class="btn-secondary" onclick="login()">Login</button>
+    <p id="auth-status" style="margin-top:10px; color:green; clear:both;"></p>
+  </div>
+
+  <div class="hidden" id="app-section">
+    <div class="card">
+      <h2>Welcome <span id="user-name"></span> <span class="badge" id="user-role"></span></h2>
+      <button onclick="showAddForm()" id="add-btn" class="hidden">+ Post Item</button>
+    </div>
+
+    <div class="card hidden" id="add-form">
+      <h3>Post New Item</h3>
+      <select id="category">
+        <option value="">Category</option>
+        <option>Crops</option><option>Fertilizer</option>
+        <option>Farm Tools</option><option>Equipment</option>
+        <option>Seeds</option><option>Other</option>
+      </select>
+      <input type="text" id="item-name" placeholder="Item Name">
+      <input type="text" id="item-price" placeholder="Price">
+      <input type="text" id="item-location" placeholder="Location">
+      <button onclick="addItem()">Post</button>
+      <button onclick="hideAddForm()" style="background:red;">Cancel</button>
+    </div>
+
+    <div class="card">
+      <h3>Available Produce & Farm Inputs</h3>
+      <div id="items-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
+    authDomain: "farm-link-global.firebaseapp.com",
+    projectId: "farm-link-global"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  
+  // FIX: Get all elements first
+  const nameEl = document.getElementById('name');
+  const roleEl = document.getElementById('role');
+  const emailEl = document.getElementById('email');
+  const passwordEl = document.getElementById('password');
+  const authStatusEl = document.getElementById('auth-status');
+  const itemsListEl = document.getElementById('items-list');
+
+  let currentUser = null;
+  let items = [
+    {name:"Maize 90kg", price:"KSh 4500", location:"Eldoret", category:"Crops", seller:"John"},
+    {name:"DAP Fertilizer", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Ltd"},
+    {name:"Jembe", price:"KSh 800", location:"Kitale", category:"Farm Tools", seller:"Mary"}
+  ];
+
+  window.signUp = () => {
+    createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+    .then(() => { 
+      currentUser = {name: nameEl.value, role: roleEl.value};
+      authStatusEl.innerText = "Account created!";
+      showApp(); 
+    })
+    .catch(e => alert(e.message));
+  }
+  
+  window.login = () => {
+    signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+    .then(() => { 
+      currentUser = {name: "User", role: "buyer"}; 
+      showApp(); 
+    })
+    .catch(e => alert(e.message));
+  }
+
+  function showApp() {
+    document.getElementById('login-card').classList.add('hidden');
+    document.getElementById('app-section').classList.remove('hidden');
+    document.getElementById('user-name').innerText = currentUser.name;
+    document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
+    if(currentUser.role === 'farmer') document.getElementById('add-btn').classList.remove('hidden');
+    loadItems();
+  }
+
+  window.showAddForm = () => document.getElementById('add-form').classList.remove('hidden');
+  window.hideAddForm = () => document.getElementById('add-form').classList.add('hidden');
+
+  window.addItem = () => {
+    items.unshift({name:document.getElementById('item-name').value, price:document.getElementById('item-price').value, location:document.getElementById('item-location').value, category:document.getElementById('category').value, seller:currentUser.name});
+    hideAddForm(); loadItems();
+  }
+
+  function loadItems() {
+    itemsListEl.innerHTML = items.map(item => `
+      <div class="item">
+        <span class="badge">${item.category}</span>
+        <h4>${item.name} - ${item.price}</h4>
+        <p>📍 ${item.location} | 👤 ${item.seller}</p>
+        <button style="width:100%; background:#00a651; margin-top:8px;" onclick="alert('Pay to Pochi 0141146754')">Contact / Pay</button>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+  </html>
