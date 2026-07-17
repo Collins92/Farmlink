@@ -19,12 +19,6 @@
  .item, .user { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; }
  .badge-blue { background: #2563eb; }
- .chat-box { border: 1px solid #ddd; height: 350px; overflow-y: scroll; padding: 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 10px; }
- .msg { padding: 8px 12px; margin: 5px 0; border-radius: 10px; max-width: 80%; clear: both; }
- .msg-me { background: #22c55e; color: white; float: right; }
- .msg-them { background: #e5e7eb; float: left; }
- .chat-input-group { display: flex; gap: 8px; }
- .chat-input-group input { flex: 1; }
  .alert { background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 </style>
 </head>
@@ -54,14 +48,12 @@
     <input type="password" id="password" placeholder="Enter Password">
     <button onclick="signUp()">Sign Up</button>
     <button class="btn-secondary" onclick="login()">Login</button>
-    <p id="auth-status" style="margin-top:10px; color:green;"></p>
   </div>
 
   <div class="hidden" id="app-section">
-    <!-- PROFILE COMPLETION ALERT -->
     <div class="alert hidden" id="complete-profile-alert">
       <h3>⚠️ Complete Your Profile</h3>
-      <p>Please add your details so buyers can find you</p>
+      <p>Fill your details below so customers can find you</p>
     </div>
 
     <div class="card">
@@ -76,7 +68,7 @@
       <h3>⚙️ Complete Your Profile</h3>
       
       <!-- FARMER FIELDS -->
-      <div id="farmer-fields" class="hidden">
+      <div id="farmer-fields">
         <input type="text" id="edit-name" placeholder="Your Full Name" required>
         <select id="edit-county" required>
           <option value="">Select County</option>
@@ -84,7 +76,7 @@
           <option>Kisumu</option><option>Trans Nzoia</option><option>Bungoma</option>
           <option>Kericho</option><option>Other</option>
         </select>
-        <input type="text" id="edit-product" placeholder="Goods You Sell. e.g: Maize, Beans, DAP" required>
+        <input type="text" id="edit-product" placeholder="Goods You Sell. e.g: Maize, Beans, DAP, Tractors" required>
       </div>
 
       <!-- BUYER FIELDS -->
@@ -96,19 +88,16 @@
       <button onclick="saveProfile()">Save Profile</button>
     </div>
 
-    <!-- BUYERS LIST -->
     <div class="card" id="buyers-section">
       <h3>🛍️ Available Buyers</h3>
       <div id="buyers-list"><p>No buyers yet</p></div>
     </div>
 
-    <!-- FARMERS LIST -->
     <div class="card">
       <h3>👨‍🌾 Available Farmers</h3>
       <div id="users-list"><p>No farmers yet</p></div>
     </div>
 
-    <!-- ADD ITEM FORM -->
     <div class="card hidden" id="add-form">
       <h3>Post New Item</h3>
       <select id="category">
@@ -124,25 +113,6 @@
       <button onclick="hideAddForm()" style="background:red;">Cancel</button>
     </div>
 
-    <!-- CHAT LIST -->
-    <div class="card hidden" id="chat-list">
-      <h3>💬 Your Chats</h3>
-      <div id="chat-contacts"></div>
-      <button onclick="hideChatList()" style="background:red; margin-top:10px;">Close</button>
-    </div>
-
-    <!-- CHAT WINDOW -->
-    <div class="card hidden" id="chat-window">
-      <h3>Chat with <span id="chat-with"></span></h3>
-      <div class="chat-box" id="chat-box"></div>
-      <div class="chat-input-group">
-        <input type="text" id="chat-input" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()">Send</button>
-      </div>
-      <button onclick="closeChat()" style="background:red; width:100%; margin-top:8px;">Close</button>
-    </div>
-
-    <!-- LISTINGS -->
     <div class="card">
       <h3>🛒 Available Produce & Farm Inputs</h3>
       <div id="items-list"><p>No items posted yet</p></div>
@@ -167,31 +137,20 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const nameEl = document.getElementById('name');
-  const roleEl = document.getElementById('role');
-  const emailEl = document.getElementById('email');
-  const passwordEl = document.getElementById('password');
-  const authStatusEl = document.getElementById('auth-status');
-  const itemsListEl = document.getElementById('items-list');
-  const usersListEl = document.getElementById('users-list');
-  const buyersListEl = document.getElementById('buyers-list');
-
   let currentUser = null;
-  let activeChat = null;
 
   window.signUp = () => {
-    createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+    createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
    .then((userCredential) => {
-      currentUser = {name: nameEl.value, role: roleEl.value, email: emailEl.value, uid: userCredential.user.uid, county:"", mainProduct:"", location:""};
+      currentUser = {name: document.getElementById('name').value, role: document.getElementById('role').value, email: document.getElementById('email').value, uid: userCredential.user.uid, county:"", mainProduct:"", location:""};
       set(ref(db, 'users/' + userCredential.user.uid), currentUser);
-      authStatusEl.innerText = "Account created!";
       showApp();
     })
    .catch(e => alert(e.message));
   }
 
   window.login = () => {
-    signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+    signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
    .then((userCredential) => {
       onValue(ref(db, 'users/' + userCredential.user.uid), (snap) => {
         currentUser = snap.val();
@@ -208,18 +167,13 @@
     document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
     if(currentUser.role === 'farmer') document.getElementById('add-btn').classList.remove('hidden');
     
-    // Force profile completion if missing
-    if(!currentUser.name || !currentUser.county && currentUser.role === 'farmer' || !currentUser.location && currentUser.role === 'buyer'){
+    if(!currentUser.name){
       document.getElementById('complete-profile-alert').classList.remove('hidden');
       showProfileForm();
     }
-    
-    loadUsers();
-    loadBuyers();
-    loadItems();
+    loadUsers(); loadBuyers(); loadItems();
   }
 
-  // PROFILE FUNCTIONS
   window.showProfileForm = () => {
     document.getElementById('profile-form').classList.remove('hidden');
     if(currentUser.role === 'farmer'){
@@ -244,13 +198,13 @@
         county: document.getElementById('edit-county').value,
         mainProduct: document.getElementById('edit-product').value
       };
-      if(!updates.name || !updates.county || !updates.mainProduct) return alert("Please fill all fields");
+      if(!updates.name || !updates.county || !updates.mainProduct) return alert("Fill all 3 fields");
     } else {
       updates = {
         name: document.getElementById('edit-buyer-name').value,
         location: document.getElementById('edit-buyer-location').value
       };
-      if(!updates.name || !updates.location) return alert("Please fill all fields");
+      if(!updates.name || !updates.location) return alert("Fill all fields");
     }
     update(ref(db, 'users/' + currentUser.uid), updates);
     currentUser = {...currentUser, ...updates};
@@ -274,12 +228,11 @@
     onValue(ref(db, 'items'), (snapshot) => {
       const data = snapshot.val() || {};
       const items = Object.values(data);
-      itemsListEl.innerHTML = items.length? items.map(item => `
+      document.getElementById('items-list').innerHTML = items.length? items.map(item => `
         <div class="item">
           <span class="badge">${item.category}</span>
           <h4>${item.name} - ${item.price}</h4>
           <p>📍 ${item.location} | 👤 ${item.seller}</p>
-          <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${item.sellerEmail}', '${item.seller}')">💬 Chat Seller</button>
         </div>
       `).join('') : "<p>No items posted yet</p>";
     });
@@ -288,12 +241,11 @@
   function loadUsers() {
     onValue(ref(db, 'users'), (snapshot) => {
       const data = snapshot.val() || {};
-      const users = Object.values(data).filter(u => u.uid !== currentUser.uid && u.role === 'farmer');
-      usersListEl.innerHTML = users.length? users.map(u => `
+      const users = Object.values(data).filter(u => u.uid !== currentUser.uid && u.role === 'farmer' && u.name);
+      document.getElementById('users-list').innerHTML = users.length? users.map(u => `
         <div class="user">
           <h4>👨‍🌾 ${u.name}</h4>
-          <p><span class="badge">📍 ${u.county || 'No County'}</span> <span class="badge">🌽 ${u.mainProduct || 'No Goods'}</span></p>
-          <button style="width:100%; background:#2563eb; margin-top:8px;" onclick="openChat('${u.email}', '${u.name}')">💬 Chat ${u.name}</button>
+          <p><span class="badge">📍 ${u.county}</span> <span class="badge">🌽 ${u.mainProduct}</span></p>
         </div>
       `).join('') : "<p>No farmers yet</p>";
     });
@@ -302,71 +254,15 @@
   function loadBuyers() {
     onValue(ref(db, 'users'), (snapshot) => {
       const data = snapshot.val() || {};
-      const buyers = Object.values(data).filter(u => u.uid !== currentUser.uid && u.role === 'buyer');
-      buyersListEl.innerHTML = buyers.length? buyers.map(u => `
+      const buyers = Object.values(data).filter(u => u.uid !== currentUser.uid && u.role === 'buyer' && u.name);
+      document.getElementById('buyers-list').innerHTML = buyers.length? buyers.map(u => `
         <div class="user">
           <h4>🛍️ ${u.name}</h4>
-          <p><span class="badge badge-blue">📍 ${u.location || 'No Location'}</span></p>
-          <button style="width:100%; background:#22c55e; margin-top:8px;" onclick="openChat('${u.email}', '${u.name}')">💬 Chat Buyer</button>
+          <p><span class="badge badge-blue">📍 ${u.location}</span></p>
         </div>
       `).join('') : "<p>No buyers yet</p>";
     });
   }
-
-  // CHAT FUNCTIONS
-  window.openChat = (email, name) => {
-    activeChat = email.replace('.', ',');
-    document.getElementById('chat-with').innerText = name;
-    document.getElementById('chat-window').classList.remove('hidden');
-    loadChat();
-  }
-
-  window.closeChat = () => document.getElementById('chat-window').classList.add('hidden');
-
-  window.showChatList = () => {
-    document.getElementById('chat-list').classList.remove('hidden');
-    onValue(ref(db, 'chats'), (snapshot) => {
-      const data = snapshot.val() || {};
-      let contacts = new Set();
-      Object.keys(data).forEach(key => {
-        if(key.includes(currentUser.email.replace('.', ','))) {
-          contacts.add(key.split('-').find(e => e !== currentUser.email.replace('.', ',')));
-        }
-      });
-      document.getElementById('chat-contacts').innerHTML = contacts.size?
-        [...contacts].map(c => `<button onclick="openChat('${c.replace(',', '.')}', '${c}')" style="width:100%; margin:5px 0;">${c.replace(',', '.')}</button>`).join('')
-        : "<p>No messages yet</p>";
-    });
-  }
-
-  window.hideChatList = () => document.getElementById('chat-list').classList.add('hidden');
-
-  window.sendMessage = () => {
-    const msg = document.getElementById('chat-input').value;
-    if(!msg || !activeChat) return;
-    const chatId = [currentUser.email.replace('.', ','), activeChat].sort().join('-');
-    push(ref(db, 'chats/' + chatId), {
-      from: currentUser.name,
-      fromEmail: currentUser.email,
-      text: msg,
-      time: Date.now()
-    });
-    document.getElementById('chat-input').value = '';
-  }
-
-  function loadChat() {
-    const chatId = [currentUser.email.replace('.', ','), activeChat].sort().join('-');
-    onValue(ref(db, 'chats/' + chatId), (snapshot) => {
-      const data = snapshot.val() || {};
-      const msgs = Object.values(data);
-      document.getElementById('chat-box').innerHTML = msgs.map(m => `
-        <div class="msg ${m.fromEmail === currentUser.email? 'msg-me' : 'msg-them'}">
-          <b>${m.from}:</b> ${m.text}
-        </div>
-      `).join('');
-      document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
-    });
-  }
 </script>
 </body>
-                                   </html>
+   </html>
