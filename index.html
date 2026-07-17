@@ -7,18 +7,19 @@
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
   body { background: #f5f5f5; }
-  .header { background: #22c55e; color: white; text-align: center; padding: 25px 15px; }
+  .header { background: #166534; color: white; text-align: center; padding: 25px 15px; }
+  .header h1 { display: flex; align-items: center; justify-content: center; gap: 8px; }
   .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
   .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
   .btn-group { display: flex; gap: 10px; }
-  button { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
-  .btn-secondary { background: #3b82f6; }
+  button { flex: 1; padding: 14px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
+  .btn-secondary { background: #2563eb; }
   .btn-mpesa { background: #00a651; margin-top: 10px; width: 100%; }
   .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
   .hidden { display: none; }
   .item { border: 1px solid #e5e7eb; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
-  .badge { background: #22c55e; color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px; }
+  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
   .badge-farmer { background: #f59e0b; }
   .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
 </style>
@@ -27,21 +28,19 @@
 
 <div class="header">
   <h1>🌾 FarmLink</h1>
-  <p>Connecting Farmers, Buyers & Farm Inputs</p>
+  <p>Connecting Farmers Directly to Buyers</p>
 </div>
 
 <div class="container">
 
   <!-- SUPPORT BOX -->
   <div class="support-box">
-    <h3>💚 Support FarmLink</h3>
-    <p>Help us keep the platform free for farmers. Pay via M-Pesa</p>
+    <h3>❤️ Support FarmLink</h3>
+    <p>Help us keep this platform free for farmers</p>
     <div style="border:2px dashed #00a651; padding:15px; border-radius:10px; margin:15px 0; background:white;">
-      <p><b>M-Pesa Number:</b></p>
-      <h2 style="color:#00a651; margin:8px 0;">0141146754</h2>
-      <p><b>Account Name:</b> Collins</p>
+      <p><b>Pochi La Biashara:</b></p>
+      <h2 style="color:#00a651; margin:8px 0; font-size:28px;">0141146754</h2>
     </div>
-    <p style="font-size:13px; color:#555;">How to pay: M-Pesa → Lipa na M-Pesa → Send Money → 0141146754</p>
   </div>
 
   <!-- LOGIN -->
@@ -59,13 +58,13 @@
       <button onclick="signUp()">Sign Up</button>
       <button class="btn-secondary" onclick="login()">Login</button>
     </div>
-    <p id="auth-status" style="margin-top:10px; color:#16a34a;"></p>
+    <p id="auth-status" style="margin-top:10px; color:#16a34a; text-align:center;"></p>
   </div>
 
   <!-- DASHBOARD -->
   <div class="hidden" id="app-section">
     <div class="card">
-      <h2>Welcome, <span id="user-name"></span> <span class="badge" id="user-role"></span></h2>
+      <h2>Welcome <span id="user-name"></span> <span class="badge" id="user-role"></span></h2>
       <button onclick="showAddForm()" id="add-btn" class="hidden">+ Post Item</button>
     </div>
 
@@ -81,7 +80,7 @@
         <option value="Seeds">Seeds</option>
         <option value="Other">Other</option>
       </select>
-      <input type="text" id="item-name" placeholder="Item Name e.g DAP 50kg, Jembe">
+      <input type="text" id="item-name" placeholder="Item Name e.g DAP 50kg, Jembe, Maize">
       <input type="text" id="item-price" placeholder="Price e.g KSh 4500">
       <input type="text" id="item-location" placeholder="Location e.g Eldoret">
       <button onclick="addItem()">Post Item</button>
@@ -90,7 +89,7 @@
 
     <!-- LISTINGS -->
     <div class="card">
-      <h3>Available Listings</h3>
+      <h3>Available Produce & Farm Inputs</h3>
       <div id="items-list"></div>
     </div>
   </div>
@@ -117,34 +116,37 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   
-  const name = document.getElementById('name');
-  const role = document.getElementById('role');
-  const email = document.getElementById('email');
-  const password = document.getElementById('password');
-  const authStatus = document.getElementById('auth-status');
+  // FIX: Define all elements here
+  const nameEl = document.getElementById('name');
+  const roleEl = document.getElementById('role');
+  const emailEl = document.getElementById('email');
+  const passwordEl = document.getElementById('password');
+  const authStatusEl = document.getElementById('auth-status');
+  const itemsListEl = document.getElementById('items-list');
 
   let currentUser = null;
   let items = [
     {name:"Maize 90kg", price:"KSh 4500", location:"Eldoret", category:"Crops", seller:"John Farmer"},
-    {name:"DAP Fertilizer 50kg", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Dealers"},
+    {name:"DAP Fertilizer 50kg", price:"KSh 6500", location:"Nakuru", category:"Fertilizer", seller:"Agro Dealers Ltd"},
     {name:"Jembe", price:"KSh 800", location:"Kitale", category:"Farm Tools", seller:"Mary Seller"},
     {name:"Water Pump", price:"KSh 25000", location:"Kericho", category:"Equipment", seller:"Tech Agro"}
   ];
 
   window.signUp = () => {
-    if(!name.value || !role.value) return alert("Enter name and select role");
-    createUserWithEmailAndPassword(auth, email.value, password.value)
+    if(!nameEl.value || !roleEl.value) return alert("Enter name and select role");
+    createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
     .then(() => { 
-      currentUser = {name: name.value, role: role.value};
+      currentUser = {name: nameEl.value, role: roleEl.value};
+      authStatusEl.innerText = "Account created!";
       showApp(); 
     })
     .catch(e => alert(e.message));
   }
   
   window.login = () => {
-    signInWithEmailAndPassword(auth, email.value, password.value)
+    signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
     .then(() => { 
-      currentUser = {name: "User", role: "buyer"}; // for demo
+      currentUser = {name: "User", role: "buyer"}; 
       showApp(); 
     })
     .catch(e => alert(e.message));
@@ -174,10 +176,10 @@
   }
 
   function loadItems() {
-    itemsList.innerHTML = items.map(item => `
+    itemsListEl.innerHTML = items.map(item => `
       <div class="item">
         <span class="badge">${item.category}</span>
-        <h4>${item.name} - ${item.price}</h4>
+        <h4 style="margin:8px 0;">${item.name} - ${item.price}</h4>
         <p>📍 ${item.location} | 👤 Seller: ${item.seller}</p>
         <button class="btn-mpesa" onclick="alert('Contact seller or Pay to Pochi 0141146754')">Contact / Pay</button>
       </div>
@@ -185,4 +187,4 @@
   }
 </script>
 </body>
-</html>
+                          </html>
