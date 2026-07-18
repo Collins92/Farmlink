@@ -190,7 +190,7 @@
     }
   }
 
-  window.saveProfile = () => {
+window.saveProfile = () => {
     let updates = {};
     if(currentUser.role === 'farmer'){
       updates = {
@@ -213,9 +213,9 @@
       document.getElementById('profile-form').classList.add('hidden');
       document.getElementById('complete-profile-alert').classList.add('hidden');
       alert("✅ Profile Saved Successfully!");
-      loadUsers(); loadBuyers(); // refresh the lists
+      loadUsers(); loadBuyers();
     }).catch(e => alert("Error: " + e.message));
-  }
+     }
     
 
   window.showAddForm = () => document.getElementById('add-form').classList.remove('hidden');
