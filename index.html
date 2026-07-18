@@ -7,19 +7,20 @@
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
   body { background: #f5f5f5; }
- .header { background: #166534; color: white; text-align: center; padding: 25px 15px; }
- .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
- .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-  button { padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px;}
- .btn-secondary { background: #2563eb; }
- .btn-outline { background: white; color: #2563eb; border: 2px solid #2563eb; }
- .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
- .hidden { display: none; }
- .item, .user { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
- .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; }
- .badge-blue { background: #2563eb; }
- .alert { background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+  .header { background: #166534; color: white; text-align: center; padding: 25px 15px; }
+  .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+  button { padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; font-size: 16px;}
+  button:active { transform: scale(0.98); }
+  .btn-secondary { background: #2563eb; }
+  .btn-outline { background: white; color: #2563eb; border: 2px solid #2563eb; }
+  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
+  .hidden { display: none; }
+  .item, .user { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 12px; background: #fafafa; }
+  .badge { background: #22c55e; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; display: inline-block; }
+  .badge-blue { background: #2563eb; }
+  .alert { background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 </style>
 </head>
 <body>
@@ -117,7 +118,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-  import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"; // <-- FIXED THIS LINE
+  import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"; // FIXED
 
   const firebaseConfig = {
     apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
@@ -134,23 +135,23 @@
 
   window.signUp = () => {
     createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
-   .then((userCredential) => {
+    .then((userCredential) => {
       currentUser = {name: document.getElementById('name').value, role: document.getElementById('role').value, email: document.getElementById('email').value, uid: userCredential.user.uid, county:"", mainProduct:"", location:""};
       set(ref(db, 'users/' + userCredential.user.uid), currentUser);
       showApp();
     })
-   .catch(e => alert(e.message));
+    .catch(e => alert(e.message));
   }
 
   window.login = () => {
     signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
-   .then((userCredential) => {
+    .then((userCredential) => {
       onValue(ref(db, 'users/' + userCredential.user.uid), (snap) => {
         currentUser = snap.val();
         showApp();
       }, {onlyOnce: true});
     })
-   .catch(e => alert(e.message));
+    .catch(e => alert(e.message));
   }
 
   function showApp() {
@@ -160,7 +161,7 @@
     document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
     if(currentUser.role === 'farmer') document.getElementById('add-btn').classList.remove('hidden');
     
-    if(!currentUser.name){
+    if(!currentUser.name || currentUser.name === ""){
       document.getElementById('complete-profile-alert').classList.remove('hidden');
       showProfileForm();
     }
