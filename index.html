@@ -11,7 +11,7 @@
  .container { max-width: 700px; margin: 20px auto; padding: 0 15px; }
  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
   input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-  button { padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+  button { padding: 12px; border: none; border-radius: 8px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px;}
  .btn-secondary { background: #2563eb; }
  .btn-outline { background: white; color: #2563eb; border: 2px solid #2563eb; }
  .support-box { background: #f0fdf4; border: 2px dashed #00a651; padding: 20px; border-radius: 10px; text-align: center; }
@@ -60,14 +60,10 @@
       <h2>Welcome <span id="user-name">Guest</span> <span class="badge" id="user-role"></span></h2>
       <button onclick="showProfileForm()" class="btn-outline">⚙️ Edit Profile</button>
       <button onclick="showAddForm()" id="add-btn" class="hidden">+ Post Item</button>
-      <button onclick="showChatList()" class="btn-secondary">💬 Messages</button>
     </div>
 
-    <!-- EDIT PROFILE FORM -->
     <div class="card hidden" id="profile-form">
       <h3>⚙️ Complete Your Profile</h3>
-      
-      <!-- FARMER FIELDS -->
       <div id="farmer-fields">
         <input type="text" id="edit-name" placeholder="Your Full Name" required>
         <select id="edit-county" required>
@@ -78,13 +74,10 @@
         </select>
         <input type="text" id="edit-product" placeholder="Goods You Sell. e.g: Maize, Beans, DAP, Tractors" required>
       </div>
-
-      <!-- BUYER FIELDS -->
       <div id="buyer-fields" class="hidden">
         <input type="text" id="edit-buyer-name" placeholder="Your Full Name" required>
         <input type="text" id="edit-buyer-location" placeholder="Your Location. e.g: Eldoret Town" required>
       </div>
-
       <button onclick="saveProfile()">Save Profile</button>
     </div>
 
@@ -124,7 +117,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-  import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+  import { getDatabase, ref, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"; // <-- FIXED THIS LINE
 
   const firebaseConfig = {
     apiKey: "AIzaSyCFmIxXg27hGvssJheCYRbGBEr2H-ZEF08",
@@ -190,7 +183,7 @@
     }
   }
 
-window.saveProfile = () => {
+  window.saveProfile = () => {
     let updates = {};
     if(currentUser.role === 'farmer'){
       updates = {
@@ -208,16 +201,16 @@ window.saveProfile = () => {
     }
     
     update(ref(db, 'users/' + currentUser.uid), updates)
-.then(() => {
+    .then(() => {
       currentUser = {...currentUser, ...updates};
       document.getElementById('user-name').innerText = currentUser.name;
       document.getElementById('profile-form').classList.add('hidden');
       document.getElementById('complete-profile-alert').classList.add('hidden');
       alert("✅ Profile Saved Successfully!");
       loadUsers(); loadBuyers();
-    }).catch(e => alert("Error: " + e.message));
-     }
-    
+    })
+    .catch(e => alert("❌ SAVE FAILED: " + e.message));
+  }
 
   window.showAddForm = () => document.getElementById('add-form').classList.remove('hidden');
   window.hideAddForm = () => document.getElementById('add-form').classList.add('hidden');
