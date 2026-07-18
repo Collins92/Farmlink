@@ -207,7 +207,8 @@ window.saveProfile = () => {
       if(!updates.name || !updates.location) return alert("Fill all fields");
     }
     
-    update(ref(db, 'users/' + currentUser.uid), updates).then(() => {
+    update(ref(db, 'users/' + currentUser.uid), updates)
+.then(() => {
       currentUser = {...currentUser, ...updates};
       document.getElementById('user-name').innerText = currentUser.name;
       document.getElementById('profile-form').classList.add('hidden');
