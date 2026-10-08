@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FarmLink Global - East Africa</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto}
+.card{transition:all.2s}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(0,0,0,.08)}
+.empty-av{width:56px;height:56px;background:#dcfce7;border:1px dashed #86efac;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#16a34a}
+#map{height:460px;border-radius:16px}
+.msg-me{margin-left:auto;background:#16a34a;color:#fff;border-radius:18px 18px 4px 18px}
+.msg-other{margin-right:auto;background:#fff;border:1px solid #e5e7eb;border-radius:18px 18px 18px 4px}
+</style>
+</head>
+<body class="bg-[#f6fef8] min-h-screen pb-20">
+<div id="notif" class="fixed top-3 right-3 z-[9999] space-y-2"></div>
+<header class="bg-gradient-to-r from-green-700 to-emerald-600 text-white p-3 sticky top-0 z-50 shadow">
+<div class="max-w-6xl mx-auto flex justify-between items-center">
+<div class="flex items-center gap-2"><div class="bg-white text-green-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">F</div><div><b class="text-[13px]">FarmLink Global</b><br><span class="text-[10px] opacity-80">East Africa • Buyers & Sellers</span></div></div>
+<div class="flex gap-1 text-[11px]">
+<button onclick="showTab('home')" id="bh" class="bg-white text-green-700 px-3 py-1.5 rounded-full font-bold">Home</button>
+<button onclick="showTab('buyers')" id="bb" class="bg-white/20 px-3 py-1.5 rounded-full">Buyer</button>
+<button onclick="showTab('sellers')" id="bs" class="bg-white/20 px-3 py-1.5 rounded-full">Seller</button>
+<button onclick="showTab('mapTab')" id="bm" class="bg-white/20 px-3 py-1.5 rounded-full">Map</button>
+<button onclick="showTab('chat')" id="bc" class="bg-white/20 px-3 py-1.5 rounded-full">Chat</button>
+</div>
+</div>
+</header>
+<div id="home" class="max-w-6xl mx-auto p-3">
+<div class="bg-gradient-to-r from-green-600 to-lime-600 rounded-2xl p-4 text-white flex justify-between items-center">
+<div><h1 class="text-lg font-bold">Linking Buyers & Sellers Across East Africa</h1><p class="text-[11px] opacity-90 mt-1">Farm products, inputs, machines from trusted sellers • Start with East Africa</p><div class="flex gap-2 mt-3 text-[10px]"><span class="bg-white/20 px-2 py-1 rounded-full"><span id="countBuyers">0</span> Buyers</span><span class="bg-white/20 px-2 py-1 rounded-full"><span id="countSellers">0</span> Sellers</span><span id="clockHome" class="bg-black/20 px-2 py-1 rounded-full"></span></div></div>
+<img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=300" class="w-24 h-24 rounded-xl object-cover hidden md:block">
+</div>
+<div class="grid grid-cols-3 gap-2 mt-3">
+<img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400" class="w-full h-28 object-cover rounded-xl"><img src="https://images.unsplash.com/photo-1589923188651-268a9765e432?w=400" class="w-full h-28 object-cover rounded-xl"><img src="https://images.unsplash.com/photo-1592985684811-6c0f98adb014?w=400" class="w-full h-28 object-cover rounded-xl">
+</div>
+<div class="mt-4">
+<div class="flex justify-between items-center"><b class="text-sm">🌾 Available Sellers</b><span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full">Live - appears instantly</span></div>
+<div id="sellersGrid" class="grid md:grid-cols-2 gap-3 mt-2"></div>
+</div>
+<div class="mt-4">
+<b class="text-sm">🛒 Buyers Looking For Products</b>
+<div id="buyersGrid" class="grid md:grid-cols-2 gap-3 mt-2"></div>
+</div>
+<div id="emptyHome" class="bg-white rounded-xl p-6 text-center border mt-3"><b>No buyers/sellers yet</b><p class="text-xs text-gray-500">Register as Buyer or Seller and you will appear here instantly</p><div class="flex gap-2 justify-center mt-3"><button onclick="showTab('buyers')" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs">I'm a Buyer</button><button onclick="showTab('sellers')" class="bg-black text-white px-4 py-2 rounded-full text-xs">I'm a Seller</button></div></div>
+<div class="bg-white rounded-xl p-3 border mt-4"><b class="text-sm">⭐ Reviews</b><div id="reviewsWall" class="mt-2 space-y-2 max-h-60 overflow-y-auto text-[11px] text-gray-400">No reviews yet</div></div>
+</div>
+<div id="buyers" class="hidden max-w-2xl mx-auto p-3"><div class="bg-white rounded-2xl p-5 border shadow-sm">
+<div class="flex justify-between items-center"><h2 class="font-bold">Buyer Dashboard</h2><span id="clockBuyer" class="text-[10px] bg-green-100 px-2 py-1 rounded-full"></span></div>
+<p class="text-[11px] text-gray-500 mt-1">Name, Product wanted, Phone, Profile pic, Location</p>
+<div class="flex gap-3 mt-4 items-center">
+<div class="w-20 h-20 rounded-full bg-green-50 border flex items-center justify-center overflow-hidden"><img id="bPrev" class="w-full h-full object-cover hidden"><span id="bPrevEmpty" class="text-[10px] text-gray-400">No pic</span></div>
+<div><input type="file" accept="image/*" onchange="compressPreview(this,'bPrev')" class="text-[11px]"></div>
+</div>
+<input id="buyerName" placeholder="Name of the buyer" class="w-full mt-3 p-3 border rounded-xl text-sm">
+<input id="buyerPhone" placeholder="Phone number" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<input id="buyerProduct" placeholder="Product he wants (e.g. Maize seeds)" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<input id="buyerLoc" placeholder="Location of buyer (Eldoret, Uasin Gishu)" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<button type="button" onclick="registerBuyer()" class="w-full bg-green-600 text-white py-3 rounded-xl mt-4 font-bold">✅ Sign In as Buyer</button>
+</div></div>
+<div id="sellers" class="hidden max-w-2xl mx-auto p-3"><div class="bg-white rounded-2xl p-5 border shadow-sm">
+<h2 class="font-bold">Seller Dashboard</h2>
+<div class="flex gap-3 mt-4">
+<div class="w-20 h-20 rounded-full bg-orange-50 border flex items-center justify-center overflow-hidden"><img id="sPrev" class="w-full h-full object-cover hidden"><span id="sPrevEmpty" class="text-[10px] text-gray-400">No pic</span></div>
+<div><input type="file" accept="image/*" onchange="compressPreview(this,'sPrev')" class="text-[11px]"><p class="text-[9px] text-gray-400">Profile picture</p></div>
+</div>
+<input id="sellerName" placeholder="Name of seller" class="w-full mt-3 p-3 border rounded-xl text-sm">
+<input id="sellerPhone" placeholder="Phone number" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<input id="sellerProduct" placeholder="Product selling (e.g. Dairy cows, Tractor)" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<input id="sellerLocation" placeholder="Location (County / Region)" class="w-full mt-2 p-3 border rounded-xl text-sm">
+<div class="mt-3"><b class="text-xs">📦 Upload products (max 20MB)</b><input type="file" id="sellerProducts" accept="image/*" multiple onchange="handleProductUpload(this)" class="w-full text-[11px] mt-1"><div id="prodPreview" class="grid grid-cols-4 gap-2 mt-2"></div><p id="prodSize" class="text-[10px] text-gray-500"></p></div>
+<button type="button" onclick="registerSeller()" class="w-full bg-black text-white py-3 rounded-xl mt-4 font-bold">✅ Sign In as Seller</button>
+</div></div>
+<div id="mapTab" class="hidden max-w-5xl mx-auto p-3"><div class="bg-white rounded-2xl p-3 border">
+<div class="flex justify-between items-center"><b class="text-sm">📍 Map - GPS + Road Following</b><div class="flex gap-1"><button onclick="setMapType('streets')" class="bg-black text-white px-3 py-1 rounded-full text-[10px]">Streets</button><button onclick="setMapType('sat')" class="bg-gray-100 px-3 py-1 rounded-full text-[10px]">Sat</button></div></div>
+<div class="flex gap-2 mt-3 flex-wrap"><button onclick="getMyLocation()" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs">📍 My Location</button><button onclick="loadMapAll()" class="bg-black text-white px-4 py-2 rounded-full text-xs">Show All + Agrovets</button><button onclick="clearRoute()" class="bg-gray-200 px-4 py-2 rounded-full text-xs">Clear</button></div>
+<div id="map" class="mt-3"></div><div id="routeInfo" class="text-xs mt-2 bg-green-50 border p-2 rounded-xl hidden"></div>
+</div></div>
+
+<div id="chat" class="hidden max-w-3xl mx-auto p-3"><div class="bg-white rounded-2xl h-[80vh] flex flex-col border shadow"><div class="p-3 border-b flex justify-between items-center"><b class="text-sm">💬 Chat Buyer ↔ Seller</b><select id="chatTarget" onchange="saveChatTarget()" class="text-xs border rounded-full px-3 py-2"></select></div><div id="chatBox" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#f6fef8] text-xs"></div><div class="p-2 border-t flex gap-2"><input id="cInput" placeholder="Message..." class="flex-1 p-3 border rounded-full text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-green-600 text-white w-12 h-12 rounded-full"><i class="fas fa-paper-plane"></i></button></div></div></div>
+
+<div id="revModal" class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 w-full max-w-sm"><h3 class="font-bold text-sm">Review <span id="revName"></span></h3><div class="flex gap-1 mt-3 text-2xl"><span onclick="setStars(1)" id="st1">☆</span><span onclick="setStars(2)" id="st2">☆</span><span onclick="setStars(3)" id="st3">☆</span><span onclick="setStars(4)" id="st4">☆</span><span onclick="setStars(5)" id="st5">☆</span></div><input id="revBy" placeholder="Your Name" class="w-full mt-3 p-2.5 border rounded-xl text-sm"><textarea id="revText" placeholder="Review..." class="w-full mt-2 p-2.5 border rounded-xl text-sm h-20"></textarea><div class="flex gap-2 mt-3"><button onclick="closeRev()" class="flex-1 bg-gray-100 py-2.5 rounded-xl">Cancel</button><button onclick="submitReview()" class="flex-1 bg-green-600 text-white py-2.5 rounded-xl font-bold">Post</button></div></div></div>
+  <script>
+const firebaseConfig = { apiKey: "AIzaSyD5HtYXW1tdYcABGqpG_ZLJNidij_QSfOw", authDomain: "house-calls-eldoret.firebaseapp.com", databaseURL: "https://house-calls-eldoret-default-rtdb.firebaseio.com", projectId: "house-calls-eldoret", storageBucket: "house-calls-eldoret.firebasestorage.app", messagingSenderId: "952901879825", appId: "1:952901879825:web:c6faa910449dd7347789b0" };
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const usersRef=db.ref('farmlink_global_v1_clean');
+const reviewsRef=db.ref('farmlink_reviews_v1');
+const chatsRef=db.ref('farmlink_chats_v1');
+let allCache=[], chatsCache=[], prodImages=[], myMap=null, baseLayer=null, satLayer=null, myLat=0.5143, myLng=35.2697, routeLine=null, curStars=0, curRevEmail='';
+function showTab(t){
+['home','buyers','sellers','mapTab','chat'].forEach(x=>{ let el=document.getElementById(x); if(el) el.classList.add('hidden'); let bid='b'+x[0]; if(x==='mapTab') bid='bm'; if(x==='buyers') bid='bb'; if(x==='sellers') bid='bs'; let b=document.getElementById(bid); if(b) b.className='bg-white/20 px-3 py-1.5 rounded-full'; });
+document.getElementById(t).classList.remove('hidden');
+let bid='b'+t[0]; if(t==='mapTab') bid='bm'; if(t==='buyers') bid='bb'; if(t==='sellers') bid='bs'; let btn=document.getElementById(bid); if(btn) btn.className='bg-white text-green-700 px-3 py-1.5 rounded-full font-bold';
+if(t==='home') renderHome(); if(t==='mapTab') setTimeout(initMap,300); if(t==='chat'){ refreshTargets(); renderChat(); }
+}
+function toast(m,ty){ let d=document.createElement('div'); d.className='px-4 py-2 rounded-xl text-xs font-bold text-white shadow '+(ty==='err'?'bg-red-600':'bg-green-600'); d.innerText=m; document.getElementById('notif').appendChild(d); setTimeout(()=>d.remove(),3500); }
+setInterval(()=>{ let s=new Date().toLocaleString(); ['clockHome','clockBuyer','clockSeller'].forEach(id=>{ let el=document.getElementById(id); if(el) el.innerText=s; }); },1000);
+window.compressPreview=function(input, imgId){
+let file=input.files[0]; if(!file) return;
+let reader=new FileReader(); reader.onload=e=>{
+let img=new Image(); img.onload=()=>{
+let canvas=document.createElement('canvas'); let max=300; let w=img.width,h=img.height; if(w>h){ if(w>max){ h*=max/w; w=max; } } else { if(h>max){ w*=max/h; h=max; } }
+canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
+let b64=canvas.toDataURL('image/jpeg',0.45);
+let el=document.getElementById(imgId); el.src=b64; el.classList.remove('hidden'); el.dataset.b64=b64; document.getElementById(imgId+'Empty').classList.add('hidden');
+}; img.src=e.target.result; }; reader.readAsDataURL(file);
+};
+window.handleProductUpload=function(input){
+prodImages=[]; let files=Array.from(input.files); let total=0; files.forEach(f=>total+=f.size);
+if(total>20000000) return toast('Total >20MB','err');
+document.getElementById('prodSize').innerText='Total: '+(total/1000000).toFixed(2)+' MB / 20 MB';
+let preview=document.getElementById('prodPreview'); preview.innerHTML='';
+files.forEach(file=>{
+let reader=new FileReader(); reader.onload=e=>{
+let img=new Image(); img.onload=()=>{
+let canvas=document.createElement('canvas'); let max=600; let w=img.width,h=img.height; if(w>h){ if(w>max){ h*=max/w; w=max; } } else { if(h>max){ w*=max/h; h=max; } }
+canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
+let b64=canvas.toDataURL('image/jpeg',0.5);
+prodImages.push(b64);
+let div=document.createElement('div'); div.innerHTML='<img src="'+b64+'" class="w-full h-16 object-cover rounded-lg">'; preview.appendChild(div);
+}; img.src=e.target.result; }; reader.readAsDataURL(file);
+});
+};
+window.registerBuyer=function(){
+let name=document.getElementById('buyerName').value.trim(), phone=document.getElementById('buyerPhone').value.trim(), product=document.getElementById('buyerProduct').value.trim(), loc=document.getElementById('buyerLoc').value.trim();
+let img=document.getElementById('bPrev').dataset.b64||'';
+if(!name||!phone||!product) return toast('Name, Phone, Product required','err');
+let email=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)+Date.now()+'@buyer.com';
+let obj={name,phone,product,location:loc||'Eldoret',photo:img,productImages:[],email,type:'buyer',time:Date.now(),lat:0.5143+Math.random()*0.08-0.04,lng:35.2697+Math.random()*0.08-0.04};
+usersRef.child(email.replace(/[.@]/g,'_')).set(obj).then(()=>{ toast('✅ Buyer on homepage','ok'); localStorage.setItem('myFarmUser',JSON.stringify(obj)); showTab('home'); });
+};
+window.registerSeller=function(){
+let name=document.getElementById('sellerName').value.trim(), phone=document.getElementById('sellerPhone').value.trim(), product=document.getElementById('sellerProduct').value.trim(), loc=document.getElementById('sellerLocation').value.trim();
+let img=document.getElementById('sPrev').dataset.b64||'';
+if(!name||!phone||!product) return toast('Name, Phone, Product required','err');
+let email=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)+Date.now()+'@seller.com';
+let obj={name,phone,product,location:loc||'Eldoret',photo:img,productImages:prodImages,email,type:'seller',time:Date.now(),lat:0.5143+Math.random()*0.08-0.04,lng:35.2697+Math.random()*0.08-0.04};
+usersRef.child(email.replace(/[.@]/g,'_')).set(obj).then(()=>{ toast('✅ Seller on homepage','ok'); localStorage.setItem('myFarmUser',JSON.stringify(obj)); prodImages=[]; showTab('home'); });
+};
+function renderHome(){
+let sellers=allCache.filter(u=>u.type==='seller');
+let buyers=allCache.filter(u=>u.type==='buyer');
+document.getElementById('countSellers').innerText=sellers.length;
+document.getElementById('countBuyers').innerText=buyers.length;
+let sg=document.getElementById('sellersGrid'), bg=document.getElementById('buyersGrid'), empty=document.getElementById('emptyHome');
+if(sellers.length===0 && buyers.length===0){ empty.classList.remove('hidden'); sg.innerHTML=''; bg.innerHTML=''; return; }
+empty.classList.add('hidden');
+sg.innerHTML=sellers.slice(-50).reverse().map(u=>{
+let pic=u.photo?'<img src="'+u.photo+'" class="w-14 h-14 rounded-full object-cover">':'<div class="empty-av">'+u.name[0].toUpperCase()+'</div>';
+let prods=u.productImages && u.productImages.length?'<div class="flex gap-1 mt-1">'+u.productImages.slice(0,3).map(p=>'<img src="'+p+'" class="w-12 h-12 rounded-lg object-cover">').join('')+'</div>':'';
+return '<div class="bg-white rounded-2xl p-3 border"><div class="flex gap-3"><div>'+pic+'</div><div class="flex-1"><b class="text-sm">'+u.name+' 🌾</b><br><span class="text-xs text-green-600 font-bold">'+u.product+'</span><br><span class="text-[11px] text-gray-500">'+u.location+' • '+u.phone+'</span>'+prods+'</div><div class="flex flex-col gap-1"><button onclick="openReview(\''+u.email+'\',\''+u.name+'\')" class="bg-gray-100 text-[10px] px-2 py-1 rounded-full">⭐ Review</button><button onclick="routeTo('+u.lat+','+u.lng+',\''+u.name+'\')" class="bg-green-600 text-white text-[10px] px-2 py-1 rounded-full">📍 Map</button><button onclick="startChatWith(\''+u.email+'\')" class="bg-black text-white text-[10px] px-2 py-1 rounded-full">Chat</button></div></div></div>';
+}).join('');
+bg.innerHTML=buyers.slice(-50).reverse().map(u=>{
+let pic=u.photo?'<img src="'+u.photo+'" class="w-14 h-14 rounded-full object-cover">':'<div class="w-14 h-14 rounded-full bg-blue-50 border flex items-center justify-center font-bold text-blue-600">'+u.name[0].toUpperCase()+'</div>';
+return '<div class="bg-white rounded-2xl p-3 border"><div class="flex gap-3"><div>'+pic+'</div><div class="flex-1"><b class="text-sm">'+u.name+' 🛒</b><br><span class="text-xs text-blue-600">Wants: '+u.product+'</span><br><span class="text-[11px] text-gray-500">'+u.location+' • '+u.phone+'</span></div><div class="flex flex-col gap-1"><button onclick="routeTo('+u.lat+','+u.lng+',\''+u.name+'\')" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full">📍 Map</button><button onclick="startChatWith(\''+u.email+'\')" class="bg-green-600 text-white text-[10px] px-2 py-1 rounded-full">Chat</button></div></div></div>';
+}).join('');
+}
+  function initMap(){ if(myMap) return; myMap=L.map('map').setView([0.5143,35.2697],12); baseLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(myMap); satLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'); loadMapAll(); }
+function setMapType(t){ if(!myMap) return; if(t==='sat'){ try{myMap.removeLayer(baseLayer)}catch(e){}; satLayer.addTo(myMap); } else { try{myMap.removeLayer(satLayer)}catch(e){}; baseLayer.addTo(myMap); } }
+function loadMapAll(){
+if(!myMap) return;
+myMap.eachLayer(l=>{ if(l instanceof L.Marker) myMap.removeLayer(l); });
+[{name:'Zion Mall Agrovet',lat:0.52,lng:35.269},{name:'Elgon Kenya',lat:0.515,lng:35.28},{name:'Uasin Gishu Farm Shop',lat:0.51,lng:35.26}].forEach(a=>{
+let icon=L.divIcon({html:'<div style="background:orange;color:white;padding:2px 6px;border-radius:12px;font-size:10px">🏪</div>'});
+L.marker([a.lat,a.lng],{icon}).addTo(myMap).bindPopup(a.name);
+});
+allCache.forEach(u=>{
+if(!u.lat) return;
+let icon=L.divIcon({html:'<div style="background:'+(u.type==='seller'?'#16a34a':'#2563eb')+';color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white">'+(u.type==='seller'?'🌾':'🛒')+'</div>'});
+L.marker([u.lat,u.lng],{icon}).addTo(myMap).bindPopup('<b>'+u.name+'</b><br>'+u.product);
+});
+if(myLat) L.marker([myLat,myLng]).addTo(myMap).bindPopup('You');
+}
+function getMyLocation(){ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(pos=>{ myLat=pos.coords.latitude; myLng=pos.coords.longitude; myMap.setView([myLat,myLng],13); loadMapAll(); toast('Location found','ok'); }); } }
+async function routeTo(destLat,destLng,name){
+showTab('mapTab');
+setTimeout(async()=>{
+try{
+if(routeLine) myMap.removeLayer(routeLine);
+let url='https://router.project-osrm.org/route/v1/driving/'+myLng+','+myLat+';'+destLng+','+destLat+'?overview=full&geometries=geojson';
+let res=await fetch(url); let data=await res.json();
+if(data.routes && data.routes[0]){
+let coords=data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+routeLine=L.polyline(coords,{color:'#16a34a',weight:6}).addTo(myMap);
+myMap.fitBounds(routeLine.getBounds(),{padding:[40,40]});
+let ri=document.getElementById('routeInfo'); ri.classList.remove('hidden'); ri.innerHTML='🟢 Road line to <b>'+name+'</b> - '+(data.routes[0].distance/1000).toFixed(1)+' km';
+} }catch(e){ routeLine=L.polyline([[myLat,myLng],[destLat,destLng]],{color:'#16a34a',weight:5}).addTo(myMap); }
+},400);
+}
+function clearRoute(){ if(routeLine){ myMap.removeLayer(routeLine); routeLine=null; document.getElementById('routeInfo').classList.add('hidden'); } }
+function refreshTargets(){
+let sel=document.getElementById('chatTarget'); if(!sel) return;
+let me=JSON.parse(localStorage.getItem('myFarmUser')||'{"email":"guest"}');
+sel.innerHTML=allCache.filter(u=>u.email!==me.email).map(u=>'<option value="'+u.email+'">'+u.name+' ['+u.type+']</option>').join('')||'<option>No users yet</option>';
+}
+function saveChatTarget(){ renderChat(); }
+function startChatWith(email){ localStorage.setItem('chatTargetPref',email); showTab('chat'); setTimeout(()=>{ let sel=document.getElementById('chatTarget'); if(sel) sel.value=email; renderChat(); },300); }
+function renderChat(){
+let me=JSON.parse(localStorage.getItem('myFarmUser')||'{"name":"Guest","email":"guest"}'); let myId=me.email||'guest'; let sel=document.getElementById('chatTarget'); let target=sel?sel.value:''; if(!target) return;
+let filtered=chatsCache.filter(c=> (c.from===myId && c.to===target) || (c.from===target && c.to===myId));
+let box=document.getElementById('chatBox'); if(!box) return;
+if(filtered.length===0) box.innerHTML='<div class="text-center text-gray-400 mt-10">No messages</div>';
+else box.innerHTML=filtered.map(c=>{
+let isMe=c.from===myId;
+return '<div class="'+(isMe?'msg-me':'msg-other')+' p-2.5 max-w-[75%]"><b class="text-[10px] opacity-70">'+(isMe?'You':c.user)+'</b><div>'+c.text+'</div><small class="text-[9px] opacity-60">'+new Date(c.time).toLocaleTimeString()+'</small></div>';
+}).join(''); box.scrollTop=box.scrollHeight;
+}
+function sendChat(){
+let input=document.getElementById('cInput'); if(!input) return; let text=input.value.trim(); if(!text) return;
+let me=JSON.parse(localStorage.getItem('myFarmUser')||'{"name":"Guest","email":"guest"}'); let sel=document.getElementById('chatTarget'); let target=sel?sel.value:''; if(!target) return toast('Select user','err');
+let msg={id:Date.now()+'_'+Math.random().toString(36).substr(2,4),from:me.email||'guest',user:me.name,to:target,text,type:'text',time:Date.now()};
+chatsRef.child(msg.id).set(msg); input.value='';
+}
+function setStars(n){ curStars=n; for(let i=1;i<=5;i++){ let el=document.getElementById('st'+i); if(el) el.innerText=i<=n?'★':'☆'; } }
+function openReview(email,name){ curRevEmail=email; curStars=0; document.getElementById('revName').innerText=name; document.getElementById('revModal').classList.remove('hidden'); for(let i=1;i<=5;i++) document.getElementById('st'+i).innerText='☆'; }
+function closeRev(){ document.getElementById('revModal').classList.add('hidden'); }
+function submitReview(){ let by=document.getElementById('revBy').value.trim()||'Guest'; let text=document.getElementById('revText').value.trim(); if(curStars===0||!text) return toast('Stars & text required','err'); reviewsRef.push({for:curRevEmail,by,stars:curStars,text,time:Date.now()}); closeRev(); toast('Review posted','ok'); }
+function renderReviews(list){ let wall=document.getElementById('reviewsWall'); if(!wall) return; if(!list||list.length===0){ wall.innerHTML='No reviews yet'; return; } wall.innerHTML=list.map(rv=>'<div class="bg-green-50 border p-2 rounded-xl text-[11px] mt-1"><b>'+rv.by+'</b> '+('★'.repeat(rv.stars))+'<br>'+rv.text+'<br><small>'+new Date(rv.time).toLocaleString()+'</small></div>').join(''); }
+usersRef.on('value',snap=>{
+let data=snap.val(); if(!data){ allCache=[]; renderHome(); refreshTargets(); return; }
+allCache=Object.values(data);
+renderHome(); refreshTargets(); renderChat(); if(myMap) loadMapAll();
+let pref=localStorage.getItem('chatTargetPref'); if(pref){ let sel=document.getElementById('chatTarget'); if(sel && [...sel.options].some(o=>o.value===pref)) sel.value=pref; localStorage.removeItem('chatTargetPref'); }
+});
+chatsRef.on('value',snap=>{ let data=snap.val(); if(!data){ chatsCache=[]; renderChat(); return; } chatsCache=Object.values(data).sort((a,b)=>a.time-b.time).slice(-200); renderChat(); });
+reviewsRef.on('value',snap=>{ let data=snap.val(); if(!data){ renderReviews([]); return; } renderReviews(Object.values(data)); });
+renderHome(); refreshTargets();
+</script></body></html>
